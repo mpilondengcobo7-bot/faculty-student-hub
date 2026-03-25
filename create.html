@@ -1,121 +1,227 @@
 {% extends 'base.html' %}
-{% block title %}Add Milestone – {{ project.title }}{% endblock %}
+{% block title %}Post New Project – DUT Project Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline-strip {
+  display: flex; align-items: stretch; gap: 0;
+  margin: 0 0 1.5rem;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+.ts-step {
+  flex: 1; padding: .6rem .75rem; text-align: center;
+  font-size: .7rem; font-weight: 700; line-height: 1.3;
+}
+.ts-step i { display: block; font-size: 1rem; margin-bottom: 3px; }
+.ts-sep { width: 20px; display: flex; align-items: center; justify-content: center;
+          background: var(--border); color: var(--text-muted); font-size: .7rem; flex-shrink: 0; }
+.ts-1 { background: #dbeafe; color: #1e40af; }
+.ts-2 { background: #d1fae5; color: #065f46; }
+.ts-3 { background: #fef9c3; color: #854d0e; }
+.ts-4 { background: #fee2e2; color: #991b1b; }
+#dateHint { font-size: .8rem; }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div class="container-xxl">
-    <div class="page-header-title"><i class="bi bi-flag-fill me-2"></i>Add Milestone</div>
-    <div class="page-header-sub">{{ project.title }}</div>
+    <div class="page-header-title"><i class="bi bi-folder-plus me-2"></i>Post New Project</div>
+    <div class="page-header-sub">Create a new academic collaboration project</div>
   </div>
 </div>
 
 <div class="container-xxl">
   <div class="row justify-content-center">
-    <div class="col-lg-6">
+    <div class="col-lg-9">
+      <div class="hub-card p-4 fade-up">
+        <form method="post" id="projectForm">
 
-      <!-- ── Date Rules Info Card ── -->
-      <div class="hub-card p-3 mb-3 fade-up" style="border-left:4px solid var(--dut-navy)">
-        <div class="fw-semibold small mb-2" style="color:var(--dut-navy)">
-          <i class="bi bi-shield-check me-1"></i>Milestone Date Rules
-        </div>
-        <div class="d-flex flex-column gap-2" style="font-size:.8rem">
-
-          {# Rule 2 — application deadline #}
-          {% if project.application_deadline %}
-            {% if project.has_commenced() %}
-            <div class="d-flex gap-2 align-items-start text-success">
-              <i class="bi bi-check-circle-fill mt-1 flex-shrink-0"></i>
-              <span>
-                Application deadline <strong>{{ project.application_deadline.strftime('%d %B %Y') }}</strong>
-                has passed — project has commenced.
-              </span>
+          <!-- ── Basic Info ── -->
+          <div class="row g-3 mb-4">
+            <div class="col-12">
+              <label class="form-label">Project Title <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control"
+                     value="{{ form_data.title if form_data else '' }}"
+                     placeholder="e.g. Machine Learning for Student Performance Prediction" required>
             </div>
-            {% else %}
-            <div class="d-flex gap-2 align-items-start text-danger">
-              <i class="bi bi-x-circle-fill mt-1 flex-shrink-0"></i>
-              <span>
-                Application deadline <strong>{{ project.application_deadline.strftime('%d %B %Y') }}</strong>
-                has <strong>not yet passed</strong>. Milestones cannot be created until the project commences.
-              </span>
+            <div class="col-md-6">
+              <label class="form-label">Department</label>
+              <select name="department" class="form-select">
+                <option value="">Select Department</option>
+                {% for d in ['Accounting','Informatics & Design','Information Technology',
+                             'Business Administration','Computer Science','Data Science'] %}
+                <option value="{{ d }}"
+                  {{ 'selected' if form_data and form_data.get('department') == d else '' }}>
+                  {{ d }}
+                </option>
+                {% endfor %}
+              </select>
             </div>
-            {% endif %}
-          {% endif %}
-
-          {# Rule 1 — milestone must be before due_date - 1 #}
-          {% if project.due_date %}
-          {% set limit = project.milestone_deadline_limit() %}
-          <div class="d-flex gap-2 align-items-start text-primary">
-            <i class="bi bi-calendar-check mt-1 flex-shrink-0"></i>
-            <span>
-              Due date must be on or before
-              <strong>{{ limit.strftime('%d %B %Y') }}</strong>
-              (one day before the project due date of {{ project.due_date.strftime('%d %B %Y') }}).
-            </span>
-          </div>
-          {% endif %}
-
-          {# Rule 3 — completion lock notice #}
-          <div class="d-flex gap-2 align-items-start text-muted">
-            <i class="bi bi-lock mt-1 flex-shrink-0"></i>
-            <span>Once marked complete, no additional tasks can be added to a milestone.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="hub-card p-4 fade-up fade-up-1">
-        <form method="post">
-          <div class="mb-3">
-            <label class="form-label">Milestone Title <span class="text-danger">*</span></label>
-            <input type="text" name="title"
-                   value="{{ form_data.get('title', '') if form_data else '' }}"
-                   class="form-control"
-                   placeholder="e.g. Phase 1: Requirements Gathering" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea name="description" class="form-control" rows="3"
-                      placeholder="What should be achieved in this milestone?"
-                      maxlength="500">{{ form_data.get('description', '') if form_data else '' }}</textarea>
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label">
-              Due Date
-              {% if project.due_date %}<span class="text-danger">*</span>{% endif %}
-            </label>
-            <input type="date" name="deadline" class="form-control"
-                   value="{{ form_data.get('deadline', '') if form_data else '' }}"
-                   min="{{ min_deadline }}"
-                   {% if max_deadline %}max="{{ max_deadline }}"{% endif %}
-                   {{ 'required' if project.due_date else '' }}>
-
-            {% if project.due_date %}
-            <div class="form-text">
-              <i class="bi bi-calendar-range me-1"></i>
-              Must be between
-              {% if project.commencement_date %}
-                <strong>{{ project.commencement_date.strftime('%d %b %Y') }}</strong> and
-              {% endif %}
-              <strong>{{ project.milestone_deadline_limit().strftime('%d %b %Y') }}</strong>.
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              <input type="text" name="category" class="form-control"
+                     value="{{ form_data.category if form_data else '' }}"
+                     placeholder="e.g. Research, Web Development, Data Analysis">
             </div>
-            {% endif %}
+            <div class="col-12">
+              <label class="form-label">Description <span class="text-danger">*</span></label>
+              <textarea name="description" class="form-control" rows="4"
+                        placeholder="Describe your project in detail..." required
+                        maxlength="2000">{{ form_data.description if form_data else '' }}</textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Objectives</label>
+              <textarea name="objectives" class="form-control" rows="3"
+                        placeholder="What are the key learning objectives?"
+                        maxlength="1000">{{ form_data.objectives if form_data else '' }}</textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Requirements</label>
+              <textarea name="requirements" class="form-control" rows="3"
+                        placeholder="What skills or prerequisites should students have?"
+                        maxlength="1000">{{ form_data.requirements if form_data else '' }}</textarea>
+            </div>
+          </div>
+
+          <!-- ── Project Timeline ── -->
+          <div class="hub-card p-0 mb-4" style="border:1.5px solid var(--border)">
+            <div class="px-4 py-3 border-bottom d-flex align-items-center gap-2"
+                 style="background:var(--bg)">
+              <i class="bi bi-calendar3-range" style="color:var(--dut-navy)"></i>
+              <span class="fw-semibold small" style="color:var(--dut-navy)">Project Timeline</span>
+              <span class="text-muted small ms-1">— all three dates are required</span>
+            </div>
+
+            <!-- Visual strip -->
+            <div class="px-4 pt-3">
+              <div class="timeline-strip">
+                <div class="ts-step ts-1">
+                  <i class="bi bi-send"></i>Applications<br>Close
+                </div>
+                <div class="ts-sep"><i class="bi bi-chevron-right"></i></div>
+                <div class="ts-step ts-2">
+                  <i class="bi bi-play-fill"></i>Project<br>Commences
+                </div>
+                <div class="ts-sep"><i class="bi bi-chevron-right"></i></div>
+                <div class="ts-step ts-3">
+                  <i class="bi bi-flag"></i>Last Milestone<br><span style="font-weight:400">(1 day before due)</span>
+                </div>
+                <div class="ts-sep"><i class="bi bi-chevron-right"></i></div>
+                <div class="ts-step ts-4">
+                  <i class="bi bi-check2-circle"></i>Project<br>Due
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">
+                    Application Deadline <span class="text-danger">*</span>
+                  </label>
+                  <input type="date" name="application_deadline" id="fldApp"
+                         class="form-control"
+                         min="{{ today }}"
+                         value="{{ form_data.application_deadline if form_data else '' }}"
+                         required>
+                  <div class="form-text">Last day students may apply.</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">
+                    Commencement Date <span class="text-danger">*</span>
+                  </label>
+                  <input type="date" name="commencement_date" id="fldComm"
+                         class="form-control"
+                         value="{{ form_data.commencement_date if form_data else '' }}"
+                         required>
+                  <div class="form-text">When project work officially begins.</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">
+                    Project Due Date <span class="text-danger">*</span>
+                  </label>
+                  <input type="date" name="due_date" id="fldDue"
+                         class="form-control"
+                         value="{{ form_data.due_date if form_data else '' }}"
+                         required>
+                  <div class="form-text">When the completed project is expected.</div>
+                </div>
+              </div>
+              <!-- Live hint -->
+              <div id="dateHint" class="mt-3 d-none"></div>
+            </div>
+          </div>
+
+          <!-- ── Participants ── -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label">Max Participants</label>
+              <input type="number" name="max_participants" class="form-control"
+                     value="{{ form_data.max_participants if form_data else '10' }}"
+                     min="1" max="100">
+            </div>
           </div>
 
           <div class="d-flex gap-3">
-            <button type="submit" class="btn btn-navy px-4 fw-semibold"
-                    {% if project.application_deadline and not project.has_commenced() %}
-                    disabled title="Project has not yet commenced"
-                    {% endif %}>
-              <i class="bi bi-check-lg me-2"></i>Create Milestone
+            <button type="submit" class="btn btn-navy px-4 fw-semibold">
+              <i class="bi bi-check-lg me-2"></i>Post Project
             </button>
-            <a href="{{ url_for('projects.detail', project_id=project.id) }}"
-               class="btn btn-outline-secondary px-4">Cancel</a>
+            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary px-4">Cancel</a>
           </div>
         </form>
       </div>
-
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const fApp  = document.getElementById('fldApp');
+const fComm = document.getElementById('fldComm');
+const fDue  = document.getElementById('fldDue');
+const hint  = document.getElementById('dateHint');
+
+function validateDates() {
+  const app  = fApp.value  ? new Date(fApp.value + 'T00:00:00')  : null;
+  const comm = fComm.value ? new Date(fComm.value + 'T00:00:00') : null;
+  const due  = fDue.value  ? new Date(fDue.value + 'T00:00:00')  : null;
+
+  const errs = [];
+  if (app && comm && comm <= app)
+    errs.push('Commencement date must be <strong>after</strong> the application deadline.');
+  if (comm && due && due <= comm)
+    errs.push('Project due date must be <strong>after</strong> the commencement date.');
+  if (app && !comm && due && due <= app)
+    errs.push('Project due date must be <strong>after</strong> the application deadline.');
+
+  if (errs.length) {
+    hint.innerHTML = '<div class="alert alert-danger py-2 mb-0 small">' +
+      errs.map(e => '<div><i class="bi bi-x-circle me-1"></i>' + e + '</div>').join('') +
+      '</div>';
+    hint.classList.remove('d-none');
+  } else if (due) {
+    const lim = new Date(due); lim.setDate(lim.getDate() - 1);
+    const fmt = d => d.toLocaleDateString('en-ZA', {day:'numeric', month:'long', year:'numeric'});
+    hint.innerHTML = '<div class="alert alert-info py-2 mb-0 small">' +
+      '<i class="bi bi-calendar-check me-1"></i>' +
+      'Milestones can be set up to <strong>' + fmt(lim) + '</strong> (one day before the project due date).' +
+      '</div>';
+    hint.classList.remove('d-none');
+  } else {
+    hint.classList.add('d-none');
+  }
+
+  // Cascade min attributes so pickers can't go backwards
+  if (fApp.value)  fComm.min = fApp.value;
+  if (fComm.value) fDue.min  = fComm.value;
+}
+
+fApp.min = '{{ today }}';
+[fApp, fComm, fDue].forEach(el => el.addEventListener('change', validateDates));
+validateDates();
+</script>
 {% endblock %}

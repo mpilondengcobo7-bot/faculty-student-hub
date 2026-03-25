@@ -1,0 +1,750 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.title }} – DUT Project Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+  
+/* ── File Drop Zone ── */
+.file-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1.2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+  user-select: none;
+}
+.file-drop-zone:hover,
+.file-drop-zone.drag-over {
+  border-color: var(--dut-navy);
+  background: var(--accent-lt);
+}
+.file-chosen-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+  color: #065f46;
+  border-radius: 50px;
+  padding: .2em .75em;
+  font-size: .75rem;
+  font-weight: 600;
+  max-width: 100%;
+}
+.file-chosen-badge span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* ── Image Preview Modal ── */
+.img-preview-overlay {
+  position: fixed; inset: 0; z-index: 3000;
+  background: rgba(0,0,0,.85);
+  display: none; align-items: center; justify-content: center;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+}
+.img-preview-overlay.active { display: flex; }
+.img-preview-box {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 90vw;
+  max-height: 90vh;
+  box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  display: flex;
+  flex-direction: column;
+}
+.img-preview-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.img-preview-box img {
+  max-width: 100%;
+  max-height: calc(90vh - 60px);
+  object-fit: contain;
+  display: block;
+}
+
+.mini-badge {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem;
+  flex-shrink: 0;
+  position: relative;
+}
+.mini-badge.locked { background: #f3f4f6; color: #d1d5db; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <a href="{{ url_for('projects.list_projects') }}" class="btn btn-sm" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:none">
+            <i class="bi bi-arrow-left me-1"></i>Back
+          </a>
+          <span class="badge-status badge-{{ project.status.value }}">{{ project.status.value.replace('_',' ') }}</span>
+        </div>
+        <div class="page-header-title">{{ project.title }}</div>
+        <div class="page-header-sub d-flex flex-wrap gap-3 mt-1">
+          <span><i class="bi bi-person me-1"></i>{{ project.faculty.name }}</span>
+          {% if project.department %}<span><i class="bi bi-building me-1"></i>{{ project.department }}</span>{% endif %}
+          {% if project.due_date %}<span><i class="bi bi-calendar2 me-1"></i>Deadline: {{ project.due_date.strftime('%d %B %Y') }}</span>{% endif %}
+          <span><i class="bi bi-people me-1"></i>{{ project.participant_count() }}/{{ project.max_participants }} participants</span>
+        </div>
+      </div>
+      {% if current_user.is_faculty and project.faculty_id == current_user.id %}
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('projects.edit', project_id=project.id) }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2)">
+          <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        <a href="{{ url_for('milestones.create', project_id=project.id) }}" class="btn btn-gold btn-sm fw-semibold">
+          <i class="bi bi-plus-lg me-1"></i>Add Milestone
+        </a>
+        <a href="{{ url_for('projects.applications', project_id=project.id) }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2)">
+          <i class="bi bi-person-check me-1"></i>Applications
+          ({{ project.applications.filter_by(status=project.applications[0].status if project.applications.count() > 0 else 'PENDING').count() if project.applications.count() > 0 else 0 }})
+        </a>
+      </div>
+        {% if project.status.value != "completed" %}
+        <form method="post" action="{{ url_for('projects.complete_project', project_id=project.id) }}" class="d-inline">
+          <button type="submit" class="btn btn-sm fw-semibold" style="background:#10b981;color:#fff;border:none"
+                  data-confirm="Mark this project as COMPLETED? This will issue certificates to all participants.">
+            <i class="bi bi-patch-check-fill me-1"></i>Complete Project
+          </button>
+        </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <div class="row g-4">
+
+    <!-- Left Column -->
+    <div class="col-lg-8">
+
+      <!-- Project Info -->
+      <div class="hub-card p-4 mb-4 fade-up">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <span class="stat-icon navy" style="width:30px;height:30px;font-size:.9rem"><i class="bi bi-info-circle"></i></span>
+          About this Project
+        </h6>
+        <p>{{ project.description }}</p>
+        {% if project.objectives %}
+        <div class="mt-3">
+          <div class="fw-semibold small mb-1 text-muted text-uppercase" style="letter-spacing:.5px">Objectives</div>
+          <p class="mb-0">{{ project.objectives }}</p>
+        </div>
+        {% endif %}
+        {% if project.requirements %}
+        <div class="mt-3">
+          <div class="fw-semibold small mb-1 text-muted text-uppercase" style="letter-spacing:.5px">Requirements</div>
+          <p class="mb-0">{{ project.requirements }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Milestones -->
+      <div class="hub-card p-4 mb-4 fade-up fade-up-1">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+            <span class="stat-icon gold" style="width:30px;height:30px;font-size:.9rem"><i class="bi bi-flag-fill"></i></span>
+            Milestones
+          </h6>
+          <div class="d-flex align-items-center gap-2">
+            {% set pct = project.completion_percentage() %}
+            <span class="small text-muted">{{ pct }}% complete</span>
+            {% if current_user.is_faculty and project.faculty_id == current_user.id %}
+            <a href="{{ url_for('milestones.create', project_id=project.id) }}" class="btn btn-outline-navy btn-sm">
+              <i class="bi bi-plus-lg me-1"></i>Add
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if milestones %}
+
+        <!-- Overall progress -->
+        <div class="mb-4">
+          <div class="progress" style="height:8px;border-radius:50px">
+            <div class="progress-bar progress-bar-navy" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+
+        <div class="milestone-timeline" id="milestoneTimeline">
+          {% for m in milestones %}
+          {% set m_idx = loop.index %}
+          <div class="milestone-item" id="milestoneItem{{ m.id }}">
+            <div class="milestone-dot {{ m.status.value }}"></div>
+            <div class="milestone-card">
+
+              <!-- ── Collapsible Header ── -->
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-0"
+                   role="button"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#milestoneBody{{ m.id }}"
+                   aria-expanded="{{ 'false' if m.status.value == 'completed' else 'true' }}"
+                   aria-controls="milestoneBody{{ m.id }}"
+                   style="cursor:pointer;user-select:none"
+                   class="milestone-header">
+                <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+                  <div>
+                    <div class="fw-bold d-flex align-items-center gap-2">
+                      {{ m.title }}
+                      <i class="bi bi-chevron-down milestone-chevron text-muted"
+                         style="font-size:.75rem;transition:transform .25s"
+                         id="chevron{{ m.id }}"></i>
+                    </div>
+                    {% if m.description %}
+                    <div class="text-muted small">{{ m.description }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                  <span class="badge-status badge-{{ m.status.value }}">
+                    {{ m.status.value.replace('_',' ') }}
+                  </span>
+                  {% if m.deadline %}
+                  <span class="small text-muted d-none d-sm-inline">
+                    <i class="bi bi-calendar2 me-1"></i>{{ m.deadline.strftime('%d %b %Y') }}
+                  </span>
+                  {% endif %}
+                  {% set t_total = m.tasks.count() %}
+                  {% set t_done  = m.tasks.filter_by(is_completed=True).count() %}
+                  {% if t_total > 0 %}
+                  <span class="small fw-semibold"
+                        style="color: {{ '#10b981' if t_done == t_total else 'var(--text-muted)' }}">
+                    {{ t_done }}/{{ t_total }}
+                    <i class="bi bi-list-check ms-1"></i>
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- ── Collapsible Body ── -->
+              <div class="collapse {{ '' if m.status.value != 'completed' else '' }} mt-3"
+                   id="milestoneBody{{ m.id }}"
+                   data-milestone-id="{{ m.id }}">
+
+                {% if m.deadline %}
+                <div class="small text-muted d-sm-none mb-2">
+                  <i class="bi bi-calendar2 me-1"></i>{{ m.deadline.strftime('%d %b %Y') }}
+                </div>
+                {% endif %}
+
+                <!-- Faculty controls -->
+                {% if current_user.is_faculty and project.faculty_id == current_user.id %}
+                <div class="d-flex gap-2 flex-wrap mb-3">
+                  {% if m.status.value != 'completed' %}
+                  {% set n_incomplete = m.incomplete_task_count() %}
+                  <form method="post" action="{{ url_for('milestones.update_status', milestone_id=m.id) }}" class="d-inline">
+                    <input type="hidden" name="status" value="completed">
+                    <button class="btn btn-sm btn-outline-success {{ 'disabled' if n_incomplete > 0 else '' }}"
+                            type="submit"
+                            {{ 'disabled' if n_incomplete > 0 else '' }}
+                            title="{{ n_incomplete ~ ' task(s) must be completed first' if n_incomplete > 0 else 'Mark as completed' }}">
+                      <i class="bi bi-check-lg me-1"></i>
+                      {% if n_incomplete > 0 %}{{ n_incomplete }} task(s) remaining{% else %}Mark Complete{% endif %}
+                    </button>
+                  </form>
+                  {% endif %}
+                  <a href="{{ url_for('milestones.edit', milestone_id=m.id) }}"
+                     class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </a>
+                  {% if m.status.value != 'completed' %}
+                  <form method="post" action="{{ url_for('milestones.delete', milestone_id=m.id) }}" class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-confirm="Delete this milestone and all its tasks?">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                  {% if m.status.value != 'completed' %}
+                  <a href="{{ url_for('milestones.create_task', milestone_id=m.id) }}"
+                     class="btn btn-sm btn-navy">
+                    <i class="bi bi-plus-lg me-1"></i>Add Task
+                  </a>
+                  {% else %}
+                  <span class="btn btn-sm btn-outline-secondary disabled" style="opacity:.5">
+                    <i class="bi bi-lock me-1"></i>Locked
+                  </span>
+                  {% endif %}
+                </div>
+
+                {% elif current_user.is_student and is_participant %}
+                {% if m.status.value == 'pending' %}
+                <form method="post" action="{{ url_for('milestones.update_status', milestone_id=m.id) }}"
+                      class="d-inline mb-3 d-block">
+                  <input type="hidden" name="status" value="in_progress">
+                  <button class="btn btn-sm btn-outline-primary" type="submit">
+                    <i class="bi bi-play-fill me-1"></i>Start Working
+                  </button>
+                </form>
+                {% endif %}
+                {% endif %}
+
+                <!-- Tasks -->
+                {% set tasks_list = m.tasks.all() %}
+                {% if tasks_list %}
+                <div class="border-top pt-3">
+                  <div class="fw-semibold small mb-2 text-muted">
+                    <i class="bi bi-list-check me-1"></i>Tasks
+                  </div>
+                  {% for task in tasks_list %}
+                  <div class="d-flex align-items-start gap-2 mb-2 p-2 rounded"
+                       style="background:var(--bg)">
+                    <i class="bi bi-{{ 'check-circle-fill text-success' if task.is_completed else 'circle text-muted' }} mt-1 flex-shrink-0"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-semibold small">{{ task.title }}</div>
+                      {% if task.description %}
+                      <div class="text-muted" style="font-size:.78rem">{{ task.description }}</div>
+                      {% endif %}
+                      <div class="d-flex flex-wrap gap-3 mt-1" style="font-size:.72rem;color:#9ca3af">
+                        {% if task.due_date %}
+                        <span><i class="bi bi-calendar2 me-1"></i>{{ task.due_date.strftime('%d %b %Y') }}</span>
+                        {% endif %}
+                        {% if task.assignee %}
+                        <span><i class="bi bi-person me-1"></i>{{ task.assignee.name }}</span>
+                        {% endif %}
+                      </div>
+
+                      <!-- Student submit -->
+                      {% if current_user.is_student and is_participant and not task.is_completed %}
+                        {% set is_my_task = (task.assigned_to is none or task.assigned_to == current_user.id) %}
+                        {% if is_my_task %}
+                        <button class="btn btn-sm btn-outline-primary mt-2"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#submitTask{{ task.id }}">
+                          <i class="bi bi-upload me-1"></i>Submit / Update
+                        </button>
+                        <div class="collapse mt-2" id="submitTask{{ task.id }}">
+                          <form method="post"
+                                action="{{ url_for('milestones.submit_task', task_id=task.id) }}"
+                                enctype="multipart/form-data"
+                                class="submission-form">
+                            <!-- Text note -->
+                            <label class="form-label small fw-semibold mb-1">
+                              Description / Notes
+                              <span class="text-muted fw-normal">(optional if file is uploaded)</span>
+                            </label>
+                            <textarea name="content" class="form-control mb-3" rows="2"
+                                      placeholder="Describe your progress, paste a link, or add notes..."
+                                      maxlength="1000"></textarea>
+
+                            <!-- File upload -->
+                            <label class="form-label small fw-semibold mb-1">
+                              Evidence File
+                              <span class="text-muted fw-normal">(PDF, DOC, DOCX, PPT, PPTX, PNG, JPG, JPEG · max 50 MB)</span>
+                            </label>
+                            <div class="file-drop-zone mb-3" id="dropZone{{ task.id }}"
+                                 onclick="document.getElementById('fileInput{{ task.id }}').click()">
+                              <i class="bi bi-cloud-upload fs-3 mb-1" style="color:var(--dut-navy)"></i>
+                              <div class="small fw-semibold" style="color:var(--dut-navy)">
+                                Click to browse or drag &amp; drop
+                              </div>
+                              <div class="text-muted" style="font-size:.72rem">
+                                PDF, DOC, DOCX, PPT, PPTX, PNG, JPG · Max 50 MB
+                              </div>
+                              <div id="fileChosen{{ task.id }}" class="file-chosen-badge d-none mt-2"></div>
+                            </div>
+                            <input type="file" name="submission_file"
+                                   id="fileInput{{ task.id }}"
+                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
+                                   class="d-none"
+                                   onchange="handleFileSelect(this, '{{ task.id }}')">
+
+                            <button type="submit" class="btn btn-sm btn-navy w-100">
+                              <i class="bi bi-send me-1"></i>Submit Task
+                            </button>
+                          </form>
+                        </div>
+                        {% else %}
+                        <div class="mt-2 d-flex align-items-center gap-2"
+                             style="font-size:.75rem;color:#9ca3af;background:#f9fafb;
+                                    border:1px dashed #e5e7eb;border-radius:6px;padding:6px 10px;">
+                          <i class="bi bi-lock text-muted"></i>
+                          Assigned to <strong class="ms-1" style="color:#6b7280">{{ task.assignee.name }}</strong>
+                        </div>
+                        {% endif %}
+                      {% endif %}
+
+                      <!-- Faculty feedback -->
+                      {% if current_user.is_faculty and project.faculty_id == current_user.id %}
+                      {% for sub in task.submissions.all() %}
+                      <div class="mt-2 rounded border overflow-hidden" style="background:#fff">
+
+                        <!-- Submission header -->
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2"
+                             style="background:#f8fafc;border-bottom:1px solid var(--border)">
+                          <div class="d-flex align-items-center gap-2">
+                            <div class="user-avatar" style="width:26px;height:26px;font-size:.65rem;background:linear-gradient(135deg,var(--dut-navy),var(--accent))">
+                              {{ sub.student.name[0].upper() }}
+                            </div>
+                            <span class="small fw-semibold">{{ sub.student.name }}</span>
+                            {% if sub.student.student_number %}
+                            <span class="text-muted" style="font-size:.7rem">#{{ sub.student.student_number }}</span>
+                            {% endif %}
+                          </div>
+                          <span class="text-muted" style="font-size:.7rem">
+                            <i class="bi bi-clock me-1"></i>{{ sub.submitted_at.strftime('%d %b %Y %H:%M') }}
+                          </span>
+                        </div>
+
+                        <div class="p-3">
+
+                          <!-- Text note -->
+                          {% if sub.content %}
+                          <p class="small mb-2 text-muted">{{ sub.content }}</p>
+                          {% endif %}
+
+                          <!-- File attachment -->
+                          {% if sub.file_path %}
+                          <div class="d-flex align-items-center gap-3 p-2 rounded mb-3"
+                               style="background:var(--bg);border:1px solid var(--border)">
+                            <div style="width:38px;height:38px;border-radius:8px;
+                                        background:color-mix(in srgb,{{ sub.file_icon_color }} 12%,white);
+                                        border:1.5px solid color-mix(in srgb,{{ sub.file_icon_color }} 30%,white);
+                                        display:flex;align-items:center;justify-content:center;
+                                        flex-shrink:0;font-size:1.1rem">
+                              <i class="bi bi-{{ sub.file_icon }}" style="color:{{ sub.file_icon_color }}"></i>
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                              <div class="fw-semibold small text-truncate" title="{{ sub.original_filename }}">
+                                {{ sub.original_filename or 'Uploaded file' }}
+                              </div>
+                              <div class="text-muted" style="font-size:.7rem">
+                                {{ sub.file_type.upper() if sub.file_type else '' }}
+                                {% if sub.file_size %} · {{ sub.file_size_human }}{% endif %}
+                              </div>
+                            </div>
+                            <a href="{{ url_for('milestones.download_submission', sub_id=sub.id) }}"
+                               class="btn btn-sm btn-navy flex-shrink-0"
+                               title="Download file" download>
+                              <i class="bi bi-download me-1"></i>Download
+                            </a>
+                            <!-- Preview button for images -->
+                            {% if sub.file_type and sub.file_type.lower() in ['png','jpg','jpeg'] %}
+                            <button class="btn btn-sm btn-outline-navy flex-shrink-0"
+                                    onclick="previewImage('{{ url_for('milestones.download_submission', sub_id=sub.id) }}', '{{ sub.original_filename }}')">
+                              <i class="bi bi-eye me-1"></i>Preview
+                            </button>
+                            {% endif %}
+                          </div>
+                          {% elif not sub.content %}
+                          <div class="text-muted small mb-3">
+                            <i class="bi bi-exclamation-circle me-1"></i>No file or text submitted.
+                          </div>
+                          {% endif %}
+
+                          <!-- Feedback section -->
+                          {% if sub.feedback %}
+                          <div class="p-2 rounded" style="background:var(--accent-lt);font-size:.8rem">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <span><i class="bi bi-chat-left-text me-1 text-primary"></i><strong>Your Feedback</strong></span>
+                              {% if sub.feedback.rating %}
+                              <span>{{ '⭐' * sub.feedback.rating }}</span>
+                              {% endif %}
+                            </div>
+                            <p class="mb-0 text-muted">{{ sub.feedback.comment }}</p>
+                          </div>
+                          {% else %}
+                          <button class="btn btn-sm btn-outline-navy w-100"
+                                  data-bs-toggle="collapse"
+                                  data-bs-target="#fbForm{{ sub.id }}">
+                            <i class="bi bi-chat-left me-1"></i>Give Feedback
+                          </button>
+                          <div class="collapse mt-2" id="fbForm{{ sub.id }}">
+                            <form method="post" action="{{ url_for('milestones.give_feedback', task_id=task.id) }}">
+                              <input type="hidden" name="submission_id" value="{{ sub.id }}">
+                              <textarea name="comment" class="form-control mb-2" rows="2"
+                                        placeholder="Write your feedback..." required maxlength="500"></textarea>
+                              <div class="d-flex gap-2 align-items-center mb-2">
+                                <label class="form-label mb-0 small">Rating:</label>
+                                <select name="rating" class="form-select form-select-sm" style="width:auto">
+                                  <option value="">– No rating –</option>
+                                  {% for i in range(1,6) %}
+                                  <option value="{{ i }}">{{ i }} ⭐</option>
+                                  {% endfor %}
+                                </select>
+                              </div>
+                              <button type="submit" class="btn btn-sm btn-navy w-100">
+                                <i class="bi bi-send me-1"></i>Submit Feedback
+                              </button>
+                            </form>
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                      {% endfor %}
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-muted small py-2">
+                  <i class="bi bi-inbox me-1"></i>No tasks yet for this milestone.
+                </div>
+                {% endif %}
+
+              </div><!-- /collapse body -->
+            </div><!-- /milestone-card -->
+          </div><!-- /milestone-item -->
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state py-3">
+          <div class="empty-icon"><i class="bi bi-flag"></i></div>
+          <p class="text-muted small">No milestones defined yet</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+
+      <!-- Apply Card (Students) -->
+      {% if current_user.is_student %}
+      <div class="hub-card p-4 mb-4 fade-up" style="border-top:4px solid var(--dut-gold)">
+        {% if is_participant %}
+        <div class="text-center">
+          <div class="stat-icon green mx-auto mb-2" style="width:52px;height:52px;font-size:1.3rem">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <div class="fw-bold mb-1">You're a Participant</div>
+          <div class="text-muted small">You have access to all milestones and tasks</div>
+        </div>
+        {% elif user_application %}
+        <div class="text-center">
+          <div class="stat-icon {{ 'gold' if user_application.status.value == 'pending' else ('green' if user_application.status.value == 'approved' else 'red') }} mx-auto mb-2" style="width:52px;height:52px;font-size:1.3rem">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div class="fw-bold mb-1">Application {{ user_application.status.value.capitalize() }}</div>
+          <div class="text-muted small">
+            {% if user_application.status.value == 'pending' %}Your application is under review{% else %}Application reviewed{% endif %}
+          </div>
+        </div>
+        {% elif project.status.value == 'open' and not project.is_full() %}
+        <h6 class="fw-bold mb-3">Apply to Join</h6>
+        <form method="post" action="{{ url_for('projects.apply', project_id=project.id) }}">
+          <div class="mb-3">
+            <label class="form-label">Personal Message <span class="text-muted small">(Optional)</span></label>
+            <textarea name="message" class="form-control" rows="3"
+                      placeholder="Why do you want to join this project? What can you contribute?" maxlength="500"></textarea>
+          </div>
+          <button type="submit" class="btn btn-gold w-100 fw-semibold">
+            <i class="bi bi-send me-2"></i>Submit Application
+          </button>
+        </form>
+        {% elif project.is_full() %}
+        <div class="text-center text-muted">
+          <i class="bi bi-people-fill fs-2 opacity-50"></i>
+          <p class="mt-2 small">This project is full</p>
+        </div>
+        {% else %}
+        <div class="text-center text-muted">
+          <i class="bi bi-lock fs-2 opacity-50"></i>
+          <p class="mt-2 small">This project is not accepting applications</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Project Meta -->
+      <div class="hub-card p-4 mb-4 fade-up fade-up-1">
+        <h6 class="fw-bold mb-3">Project Info</h6>
+        <div class="d-flex flex-column gap-2">
+          {% macro info_row(icon, label, value) %}
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:.85rem">
+            <span class="text-muted"><i class="bi bi-{{ icon }} me-1"></i>{{ label }}</span>
+            <span class="fw-semibold">{{ value }}</span>
+          </div>
+          {% endmacro %}
+          {{ info_row('person', 'Faculty', project.faculty.name) }}
+          {% if project.department %}{{ info_row('building', 'Department', project.department) }}{% endif %}
+          {% if project.category %}{{ info_row('tag', 'Category', project.category) }}{% endif %}
+          {{ info_row('people', 'Participants', project.participant_count() ~ '/' ~ project.max_participants) }}
+          {{ info_row('flag', 'Milestones', project.milestones.count()) }}
+          {{ info_row('calendar-plus', 'Project Posted', project.created_at.strftime('%d %b %Y')) }}
+          {{ info_row('calendar2', 'Applications Deadline', project.application_deadline.strftime('%d %b %Y')) }}
+          {{ info_row('calendar-plus', 'Project Start Date', project.commencement_date.strftime('%d %b %Y')) }} 
+          {% if project.due_date %}{{ info_row('calendar2', 'Project Deadline', project.due_date.strftime('%d %b %Y')) }}{% endif %}
+        </div>
+      </div>
+
+      <!-- Participants -->
+      {% if project.participants %}
+      <div class="hub-card p-4 fade-up fade-up-2">
+        <h6 class="fw-bold mb-3"><i class="bi bi-people me-2"></i>Team Members</h6>
+        {% for participant in project.participants %}
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="user-avatar" style="width:32px;height:32px;font-size:.78rem;background:linear-gradient(135deg,var(--dut-navy),var(--accent))">
+            {{ participant.name[0].upper() }}
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-semibold small">{{ participant.name }}</div>
+            <div class="text-muted" style="font-size:.72rem">
+              {% if participant.student_number %}#{{ participant.student_number }}{% else %}{{ participant.email }}{% endif %}
+            </div>
+          </div>
+          {% set badge_count = participant.badges.count() %}
+          {% if badge_count > 0 %}
+          {% if current_user.is_faculty or current_user.is_admin %}
+          <a href="{{ url_for('achievements.user_achievements', user_id=participant.id) }}"
+             class="d-flex align-items-center gap-1 text-decoration-none"
+             style="font-size:.7rem;color:var(--dut-gold)"
+             data-bs-toggle="tooltip" title="{{ badge_count }} badge{{ 's' if badge_count != 1 }} – click to view">
+            <i class="bi bi-award-fill"></i>
+            <span class="fw-bold">{{ badge_count }}</span>
+          </a>
+          {% else %}
+          <div class="d-flex align-items-center gap-1" style="font-size:.7rem;color:var(--dut-gold)"
+               data-bs-toggle="tooltip" title="{{ badge_count }} badge{{ 's' if badge_count != 1 }}">
+            <i class="bi bi-award-fill"></i>
+            <span class="fw-bold">{{ badge_count }}</span>
+          </div>
+          {% endif %}
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Achievements teaser for participants -->
+      {% if current_user.is_student and is_participant %}
+      {% from 'achievements/_badge_mini.html' import badge_mini %}
+      <div class="hub-card p-3 mt-3 fade-up fade-up-3"
+           style="background:linear-gradient(135deg,#002147,#003b6e);border:none">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-trophy-fill text-warning"></i>
+          <span class="fw-bold text-white small">Your Achievements</span>
+        </div>
+        <div class="d-flex gap-1 flex-wrap mb-2">
+          {% for badge in current_user.badges.limit(6).all() %}
+          <div class="mini-badge" style="background:{{ badge.meta.color }}22;color:{{ badge.meta.color }}"
+               data-bs-toggle="tooltip" title="{{ badge.meta.label }}">
+            <i class="bi bi-{{ badge.meta.icon }}"></i>
+          </div>
+          {% endfor %}
+          {% if current_user.badges.count() == 0 %}
+          <div class="text-white-50 small">No badges yet — complete tasks to earn them!</div>
+          {% endif %}
+        </div>
+        <a href="{{ url_for('achievements.index') }}" class="btn btn-gold btn-sm w-100 fw-semibold">
+          <i class="bi bi-award me-1"></i>View All Achievements
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+
+<!-- Image Preview Modal -->
+<div class="img-preview-overlay" id="imgPreviewOverlay" onclick="closePreview(event)">
+  <div class="img-preview-box">
+    <div class="img-preview-header">
+      <span class="fw-semibold small" id="imgPreviewTitle"></span>
+      <button class="btn btn-sm btn-outline-secondary" onclick="closeImgPreview()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <img id="imgPreviewSrc" src="" alt="Preview">
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+// ── File drop zone ────────────────────────────────────────────────────────────
+function handleFileSelect(input, taskId) {
+  const zone   = document.getElementById('dropZone' + taskId);
+  const badge  = document.getElementById('fileChosen' + taskId);
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const maxMB = 50;
+    if (file.size > maxMB * 1024 * 1024) {
+      alert('File is too large. Maximum size is 50 MB.');
+      input.value = '';
+      badge.classList.add('d-none');
+      return;
+    }
+    const allowed = ['pdf','doc','docx','ppt','pptx','png','jpg','jpeg'];
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!allowed.includes(ext)) {
+      alert('File type not allowed. Please upload PDF, DOC, DOCX, PPT, PPTX, PNG, JPG, or JPEG.');
+      input.value = '';
+      badge.classList.add('d-none');
+      return;
+    }
+    const sizeFmt = file.size < 1024*1024
+      ? (file.size/1024).toFixed(1) + ' KB'
+      : (file.size/(1024*1024)).toFixed(1) + ' MB';
+    badge.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>'
+      + '<span>' + file.name + '</span>'
+      + '<small class="text-muted ms-1">(' + sizeFmt + ')</small>';
+    badge.classList.remove('d-none');
+    zone.style.borderColor = 'var(--dut-navy)';
+    zone.style.background  = '#f0f6ff';
+  }
+}
+
+// Drag-and-drop wiring for all drop zones
+document.querySelectorAll('.file-drop-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+
+    const form  = zone.closest('form');
+    const input = form ? form.querySelector('input[type=file]') : null;
+    if (input && e.dataTransfer.files.length) {
+
+      const taskId = zone.id.replace('dropZone','');
+      const dt = new DataTransfer();
+      dt.items.add(e.dataTransfer.files[0]);
+      input.files = dt.files;
+      handleFileSelect(input, taskId);
+    }
+  });
+});
+
+// ── Image preview ─────────────────────────────────────────────────────────────
+function previewImage(url, name) {
+  document.getElementById('imgPreviewSrc').src   = url;
+  document.getElementById('imgPreviewTitle').textContent = name || 'Preview';
+  document.getElementById('imgPreviewOverlay').classList.add('active');
+}
+function closeImgPreview() {
+  document.getElementById('imgPreviewOverlay').classList.remove('active');
+  document.getElementById('imgPreviewSrc').src = '';
+}
+function closePreview(e) {
+  if (e.target === document.getElementById('imgPreviewOverlay')) closeImgPreview();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeImgPreview();
+});
+</script>
+{% endblock %}

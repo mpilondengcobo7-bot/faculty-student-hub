@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Applications – {{ project.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="d-flex align-items-center gap-3">
+      <a href="{{ url_for('projects.detail', project_id=project.id) }}" class="btn btn-sm" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:none">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <div class="page-header-title">Applications</div>
+        <div class="page-header-sub">{{ project.title }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <!-- Pending Applications -->
+  <div class="hub-card p-0 mb-4 fade-up">
+    <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+        <span class="stat-icon gold" style="width:28px;height:28px;font-size:.8rem"><i class="bi bi-hourglass-split"></i></span>
+        Pending Applications
+        {% if pending %}<span class="badge bg-warning text-dark rounded-pill">{{ pending|length }}</span>{% endif %}
+      </h6>
+    </div>
+    {% if pending %}
+    <div class="p-3">
+      <div class="row g-3">
+        {% for app in pending %}
+        <div class="col-md-6 col-lg-4">
+          <div class="hub-card p-3">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <div class="user-avatar" style="width:40px;height:40px;font-size:.9rem;background:linear-gradient(135deg,var(--dut-navy),var(--accent))">
+                {{ app.student.name[0].upper() }}
+              </div>
+              <div>
+                <div class="fw-bold">{{ app.student.name }}</div>
+                <div class="text-muted small">
+                  {% if app.student.student_number %}#{{ app.student.student_number }}{% else %}{{ app.student.email }}{% endif %}
+                </div>
+              </div>
+            </div>
+            {% if app.message %}
+            <div class="p-2 rounded mb-3" style="background:var(--bg);font-size:.82rem;color:var(--text-muted);font-style:italic">
+              "{{ app.message }}"
+            </div>
+            {% endif %}
+            <div class="text-muted small mb-3"><i class="bi bi-clock me-1"></i>{{ app.applied_at.strftime('%d %b %Y %H:%M') }}</div>
+            <div class="d-flex gap-2">
+              <form method="post" action="{{ url_for('projects.review_application', app_id=app.id) }}" class="flex-fill">
+                <input type="hidden" name="action" value="approve">
+                <button type="submit" class="btn btn-sm w-100" style="background:#d1fae5;color:#065f46;font-weight:600">
+                  <i class="bi bi-check-lg me-1"></i>Approve
+                </button>
+              </form>
+              <form method="post" action="{{ url_for('projects.review_application', app_id=app.id) }}" class="flex-fill">
+                <input type="hidden" name="action" value="reject">
+                <button type="submit" class="btn btn-sm w-100" style="background:#fee2e2;color:#991b1b;font-weight:600">
+                  <i class="bi bi-x-lg me-1"></i>Reject
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="empty-icon"><i class="bi bi-inbox"></i></div><p class="text-muted small">No pending applications</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Reviewed -->
+  {% if reviewed %}
+  <div class="hub-card p-0 fade-up fade-up-1">
+    <div class="px-4 py-3 border-bottom">
+      <h6 class="fw-bold mb-0">Reviewed Applications</h6>
+    </div>
+    <div class="table-responsive">
+      <table class="hub-table">
+        <thead><tr><th>Student</th><th>Applied</th><th>Status</th><th>Reviewed</th></tr></thead>
+        <tbody>
+          {% for app in reviewed %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ app.student.name }}</div>
+              <div class="text-muted small">{{ app.student.email }}</div>
+            </td>
+            <td class="text-muted small">{{ app.applied_at.strftime('%d %b %Y') }}</td>
+            <td><span class="badge-status badge-{{ app.status.value }}">{{ app.status.value }}</span></td>
+            <td class="text-muted small">{{ app.reviewed_at.strftime('%d %b %Y') if app.reviewed_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

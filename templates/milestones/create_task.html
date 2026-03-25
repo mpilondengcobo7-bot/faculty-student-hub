@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Add Task – {{ milestone.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="page-header-title"><i class="bi bi-plus-square me-2"></i>Add Task</div>
+    <div class="page-header-sub">Milestone: {{ milestone.title }}</div>
+  </div>
+</div>
+<div class="container-xxl">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      <!-- Date context banner -->
+      {% set proj = milestone.project %}
+      {% if milestone.deadline or proj.deadline %}
+      <div class="alert alert-info mb-3" style="font-size:.875rem">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <i class="bi bi-calendar-range fs-5 flex-shrink-0"></i>
+          <strong>Date constraints for this task:</strong>
+        </div>
+        <ul class="mb-0 ps-4" style="line-height:2">
+          {% if milestone.deadline %}
+          <li>
+            <i class="bi bi-flag-fill text-warning me-1"></i>
+            Milestone deadline: <strong>{{ milestone.deadline.strftime('%d %b %Y') }}</strong>
+          </li>
+          {% endif %}
+          {% if proj.deadline %}
+          <li>
+            <i class="bi bi-briefcase-fill text-primary me-1"></i>
+            Project deadline: <strong>{{ proj.deadline.strftime('%d %b %Y') }}</strong>
+          </li>
+          {% endif %}
+          <li class="text-muted">The task due date must be on or before the earliest of the above.</li>
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="hub-card p-4 fade-up">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Task Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control"
+                   placeholder="e.g. Create ERD diagram"
+                   value="{{ form_data.title if form_data else '' }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"
+                      placeholder="Task details..." maxlength="500">{{ form_data.description if form_data else '' }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assign To <span class="text-muted small">(Optional)</span></label>
+            <select name="assigned_to" class="form-select">
+              <option value="">— Unassigned —</option>
+              {% for p in participants %}
+              <option value="{{ p.id }}"
+                {% if form_data and form_data.assigned_to == p.id|string %}selected{% endif %}>
+                {{ p.name }} {% if p.student_number %}(#{{ p.student_number }}){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Due Date</label>
+            <input type="date" name="due_date" class="form-control"
+                   min="{{ today }}"
+                   {% if max_due %}max="{{ max_due }}"{% endif %}
+                   value="{{ form_data.due_date if form_data else '' }}">
+            {% if max_due %}
+            <div class="form-text text-muted">
+              <i class="bi bi-lock me-1"></i>
+              Cannot be set after
+              {% if milestone.deadline and proj.deadline %}
+                {{ [milestone.deadline, proj.deadline] | min | strftime('%d %b %Y') }}
+                (earliest of milestone / project deadline).
+              {% elif milestone.deadline %}
+                {{ milestone.deadline.strftime('%d %b %Y') }} (milestone deadline).
+              {% else %}
+                {{ proj.deadline.strftime('%d %b %Y') }} (project deadline).
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-navy px-4 fw-semibold">
+              <i class="bi bi-plus-lg me-2"></i>Add Task
+            </button>
+            <a href="{{ url_for('projects.detail', project_id=milestone.project_id) }}"
+               class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

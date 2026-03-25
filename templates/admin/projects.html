@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}All Projects – Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="page-header-title"><i class="bi bi-folder me-2"></i>All Projects</div>
+    <div class="page-header-sub">{{ projects|length }} projects in the system</div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <div class="hub-card p-0 fade-up">
+    <div class="table-responsive">
+      <table class="hub-table">
+        <thead>
+          <tr><th>Project</th><th>Faculty</th><th>Dept</th><th>Status</th><th>Participants</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for p in projects %}
+          <tr>
+            <td>
+              <a href="{{ url_for('projects.detail', project_id=p.id) }}" class="fw-semibold text-decoration-none" style="color:var(--dut-navy)">{{ p.title }}</a>
+            </td>
+            <td class="text-muted small">{{ p.faculty.name }}</td>
+            <td class="text-muted small">{{ p.department or '—' }}</td>
+            <td><span class="badge-status badge-{{ p.status.value }}">{{ p.status.value.replace('_',' ') }}</span></td>
+            <td class="text-muted small">{{ p.participant_count() }}/{{ p.max_participants }}</td>
+            <td class="text-muted small">{{ p.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('projects.detail', project_id=p.id) }}" class="btn btn-sm btn-outline-navy"><i class="bi bi-eye"></i></a>
+                <form method="post" action="{{ url_for('admin.delete_project', project_id=p.id) }}" class="d-inline">
+                  <button class="btn btn-sm btn-outline-danger" data-confirm="Delete '{{ p.title }}'?"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

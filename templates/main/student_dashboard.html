@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – DUT Project Hub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <div class="page-header-title">Hi, {{ current_user.name.split()[0] }} 👋</div>
+        <div class="page-header-sub">
+          <span class="role-pill role-student me-2"><i class="bi bi-person-fill me-1"></i>Student</span>
+          {% if current_user.student_number %}#{{ current_user.student_number }}{% endif %}
+        </div>
+      </div>
+      <a href="{{ url_for('projects.list_projects') }}" class="btn btn-gold fw-semibold">
+        <i class="bi bi-search me-1"></i>Find Projects
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container-xxl">
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3 fade-up fade-up-1">
+      <div class="stat-card">
+        <div class="stat-icon navy"><i class="bi bi-folder-check"></i></div>
+        <div>
+          <div class="stat-value">{{ joined|length }}</div>
+          <div class="stat-label">Joined Projects</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-2">
+      <div class="stat-card">
+        <div class="stat-icon gold"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+          <div class="stat-value">{{ pending_apps }}</div>
+          <div class="stat-label">Pending Applications</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-3">
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="bi bi-collection"></i></div>
+        <div>
+          <div class="stat-value">{{ open_projects }}</div>
+          <div class="stat-label">Open Projects</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-4">
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="bi bi-alarm"></i></div>
+        <div>
+          <div class="stat-value">{{ upcoming_milestones|length }}</div>
+          <div class="stat-label">Upcoming Deadlines</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tasks Due Today Alert ── -->
+  {% if tasks_due_today %}
+  <div class="hub-card p-0 mb-4 fade-up" style="border:2px solid #f59e0b;overflow:hidden">
+    <div class="px-4 py-3 d-flex align-items-center gap-3"
+         style="background:linear-gradient(135deg,#fffbeb,#fef3cd);border-bottom:1px solid #fcd34d">
+      <div style="width:44px;height:44px;background:#f59e0b;border-radius:10px;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:1.2rem;color:#fff;flex-shrink:0">
+        <i class="bi bi-alarm-fill"></i>
+      </div>
+      <div class="flex-grow-1">
+        <div class="fw-bold" style="color:#92400e">
+          ⏰ {{ tasks_due_today|length }} Task{{ 's' if tasks_due_today|length != 1 }}
+          Due Today — Submit Before Midnight!
+        </div>
+        <div class="small" style="color:#b45309">
+          You will be reminded every 4 hours until you submit.
+        </div>
+      </div>
+    </div>
+    <div class="p-3" style="background:#fffdf5">
+      {% for task in tasks_due_today %}
+      <div class="d-flex align-items-start gap-3 p-3 rounded mb-2
+                  {{ 'border border-warning' if loop.first else '' }}"
+           style="background:#fff;border:1.5px solid {{ '#fcd34d' if loop.first else 'var(--border)' }}">
+        <div style="width:36px;height:36px;background:#fef3cd;border:1.5px solid #fcd34d;
+                    border-radius:8px;display:flex;align-items:center;justify-content:center;
+                    flex-shrink:0;color:#d97706;font-size:.9rem">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-bold small" style="color:#1a2035">{{ task.title }}</div>
+          <div class="text-muted" style="font-size:.75rem">
+            <i class="bi bi-folder2-open me-1"></i>{{ task.project.title }}
+            {% if task.milestone %}
+            <span class="mx-1">·</span>
+            <i class="bi bi-flag me-1"></i>{{ task.milestone.title }}
+            {% endif %}
+          </div>
+          {% if task.description %}
+          <div class="text-muted mt-1" style="font-size:.75rem">{{ task.description }}</div>
+          {% endif %}
+        </div>
+        <a href="{{ url_for('projects.detail', project_id=task.project_id) }}"
+           class="btn btn-sm fw-semibold flex-shrink-0"
+           style="background:#f59e0b;color:#fff;border:none;white-space:nowrap">
+          <i class="bi bi-upload me-1"></i>Submit Now
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row g-4">
+
+    <!-- Joined Projects -->
+    <div class="col-lg-8">
+      <div class="hub-card p-0 fade-up">
+        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+          <h6 class="fw-bold mb-0"><i class="bi bi-folder-check me-2 text-primary"></i>My Projects</h6>
+          <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-navy btn-sm">Explore More</a>
+        </div>
+        {% if joined %}
+        <div class="p-3">
+          <div class="row g-3">
+            {% for p in joined %}
+            <div class="col-md-6">
+              <a href="{{ url_for('projects.detail', project_id=p.id) }}" class="text-decoration-none">
+                <div class="project-card hub-card-hover">
+                  <div class="project-status-bar status-{{ p.status.value }}"></div>
+                  <div class="project-card-top">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <span class="badge-status badge-{{ p.status.value }}">{{ p.status.value.replace('_',' ') }}</span>
+                      {% if p.department %}
+                      <small class="text-muted">{{ p.department }}</small>
+                      {% endif %}
+                    </div>
+                    <div class="fw-bold mb-1" style="color:var(--dut-navy);font-size:.95rem">{{ p.title }}</div>
+                    <div class="small text-muted">by {{ p.faculty.name }}</div>
+                  </div>
+                  <div class="project-card-bottom">
+                    <div class="d-flex justify-content-between align-items-center small">
+                      <span class="text-muted"><i class="bi bi-flag me-1"></i>{{ p.milestones.count() }} milestones</span>
+                      <span class="fw-semibold" style="color:var(--accent)">{{ p.completion_percentage() }}% done</span>
+                    </div>
+                    <div class="progress mt-2" style="height:5px">
+                      <div class="progress-bar progress-bar-navy" aria-valuenow="{{ p.completion_percentage() }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="bi bi-folder2-open"></i></div>
+          <p class="fw-semibold">You haven't joined any projects yet</p>
+          <a href="{{ url_for('projects.list_projects') }}" class="btn btn-navy btn-sm">Browse Projects</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+
+      <!-- Upcoming Milestones -->
+      <div class="hub-card p-0 fade-up fade-up-2">
+        <div class="px-4 py-3 border-bottom">
+          <h6 class="fw-bold mb-0"><i class="bi bi-alarm me-2 text-warning"></i>Upcoming Deadlines</h6>
+        </div>
+        <div class="p-3">
+          {% if upcoming_milestones %}
+            {% for m in upcoming_milestones %}
+            <div class="d-flex gap-3 mb-3 p-2 rounded" style="background:var(--bg)">
+              <div class="text-center flex-shrink-0" style="min-width:44px">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--dut-navy)">{{ m.deadline.strftime('%d') }}</div>
+                <div style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase">{{ m.deadline.strftime('%b') }}</div>
+              </div>
+              <div>
+                <div class="fw-semibold small">{{ m.title }}</div>
+                <div class="text-muted" style="font-size:.75rem">{{ m.project.title }}</div>
+                <span class="badge-status badge-{{ m.status.value }}" style="font-size:.65rem;margin-top:2px;display:inline-block">
+                  {{ m.status.value.replace('_',' ') }}
+                </span>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="empty-state py-3">
+            <i class="bi bi-calendar-check text-success" style="font-size:2rem;opacity:.5"></i>
+            <p class="mt-2 small text-muted">No upcoming deadlines</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+
+      <!-- Achievements Teaser -->
+      <div class="hub-card p-3 mt-3 fade-up fade-up-4" style="border-top:3px solid var(--dut-gold)">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold mb-0"><i class="bi bi-trophy-fill text-warning me-1"></i>My Achievements</h6>
+          <a href="{{ url_for('achievements.index') }}" class="small text-decoration-none" style="color:var(--accent)">View all</a>
+        </div>
+        {% set earned = current_user.badges.count() %}
+        {% set certs  = current_user.certificates.count() %}
+        <div class="d-flex gap-3 mb-3">
+          <div class="text-center flex-fill p-2 rounded" style="background:var(--bg)">
+            <div style="font-size:1.3rem;font-weight:700;color:var(--dut-navy)">{{ earned }}</div>
+            <div style="font-size:.7rem;color:var(--text-muted)">Badges</div>
+          </div>
+          <div class="text-center flex-fill p-2 rounded" style="background:var(--bg)">
+            <div style="font-size:1.3rem;font-weight:700;color:var(--dut-gold)">{{ certs }}</div>
+            <div style="font-size:.7rem;color:var(--text-muted)">Certificates</div>
+          </div>
+        </div>
+        
+        <!-- Mini badge strip -->
+        <div class="d-flex gap-1 flex-wrap">
+          {% for badge in current_user.badges.limit(8).all() %}
+          <div style="width:32px;height:32px;border-radius:50%;background:{{ badge.meta.color }}22;
+               color:{{ badge.meta.color }};display:flex;align-items:center;justify-content:center;
+               font-size:.85rem;" data-bs-toggle="tooltip" title="{{ badge.meta.label }}">
+            <i class="bi bi-{{ badge.meta.icon }}"></i>
+          </div>
+          {% endfor %}
+          {% if current_user.badges.count() == 0 %}
+          <div class="text-muted small">Join a project to start earning badges!</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Quick Action -->
+      <div class="hub-card p-3 mt-3 fade-up fade-up-3" style="background:linear-gradient(135deg,var(--dut-navy),#00336b);border:none">
+        <div class="text-white fw-bold mb-1">Explore Open Projects</div>
+        <div class="text-white-50 small mb-3">{{ open_projects }} projects are currently accepting applications</div>
+        <a href="{{ url_for('projects.list_projects') }}?status=open" class="btn btn-gold btn-sm fw-semibold w-100">
+          Browse Now <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

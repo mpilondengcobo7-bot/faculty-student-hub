@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% block title %}Register – DUT Project Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+/* POPIA Modal styles */
+.popia-modal-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,.65);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(3px);
+}
+.popia-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 600px; width: 100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,.35);
+  overflow: hidden;
+  animation: popiaIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popiaIn {
+  from { transform: scale(.88) translateY(20px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);    opacity: 1; }
+}
+.popia-header {
+  background: linear-gradient(135deg, var(--dut-navy), #003b6e);
+  padding: 1.5rem 2rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.popia-header-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(200,151,44,.2);
+  border: 2px solid rgba(200,151,44,.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #c8972c; flex-shrink: 0;
+}
+.popia-body {
+  padding: 1.75rem 2rem;
+  max-height: 55vh; overflow-y: auto;
+}
+.popia-body::-webkit-scrollbar { width: 5px; }
+.popia-body::-webkit-scrollbar-thumb { background: #c5cdd6; border-radius: 50px; }
+.popia-section { margin-bottom: 1.1rem; }
+.popia-section-title {
+  font-size: .78rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--dut-navy); margin-bottom: .4rem;
+  display: flex; align-items: center; gap: 6px;
+}
+.popia-section p { font-size: .85rem; color: #4b5563; line-height: 1.6; margin: 0; }
+.popia-footer {
+  padding: 1rem 2rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+.popia-checkbox-wrap {
+  display: flex; align-items: flex-start; gap: .6rem;
+  background: #f0f4ff; border: 1.5px solid #c7d7f5;
+  border-radius: 8px; padding: .75rem 1rem;
+  margin-bottom: 1rem; cursor: pointer;
+}
+.popia-checkbox-wrap input[type=checkbox] {
+  width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; cursor: pointer;
+  accent-color: var(--dut-navy);
+}
+.popia-checkbox-wrap label {
+  font-size: .82rem; color: #374151; cursor: pointer; line-height: 1.45;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── POPIA Declaration Modal ── -->
+<div class="popia-modal-overlay" id="popiaOverlay">
+  <div class="popia-modal" role="dialog" aria-modal="true" aria-labelledby="popiaTitle">
+
+    <div class="popia-header">
+      <div class="popia-header-icon"><i class="bi bi-shield-lock-fill"></i></div>
+      <div>
+        <h5 class="text-white fw-bold mb-0" id="popiaTitle">POPIA Declaration</h5>
+        <div style="color:rgba(255,255,255,.6);font-size:.78rem">
+          Protection of Personal Information Act (Act 4 of 2013)
+        </div>
+      </div>
+    </div>
+
+    <div class="popia-body">
+      <div class="popia-section">
+        <div class="popia-section-title">
+          <i class="bi bi-info-circle-fill" style="color:var(--dut-navy)"></i>
+          Purpose of Collection
+        </div>
+        <p>
+          Durban University of Technology (DUT) collects your personal information — including
+          your name, email address, student number, and department — solely for the purpose of
+          operating the Faculty–Student Collaborative Project Hub. This information is used to
+          authenticate your identity, facilitate project collaboration, and track academic
+          progress within the platform.
+        </p>
+      </div>
+
+      <div class="popia-section">
+        <div class="popia-section-title">
+          <i class="bi bi-database-lock-fill" style="color:var(--dut-navy)"></i>
+          How Your Data Is Used
+        </div>
+        <p>
+          Your data will be used to create and manage your account, display your profile to
+          fellow participants and faculty, record project milestones, task submissions, and
+          feedback, and issue certificates of completion. Your information will
+          <strong>not</strong> be sold, rented, or shared with third parties outside the
+          DUT institution for marketing purposes.
+        </p>
+      </div>
+
+      <div class="popia-section">
+        <div class="popia-section-title">
+          <i class="bi bi-lock-fill" style="color:var(--dut-navy)"></i>
+          Data Security &amp; Retention
+        </div>
+        <p>
+          DUT implements reasonable technical and organisational measures to protect your
+          personal information against unauthorised access, loss, or misuse. Your data will
+          be retained for the duration of your registration and may be archived for academic
+          record-keeping purposes in accordance with DUT's data retention policy.
+        </p>
+      </div>
+
+      <div class="popia-section">
+        <div class="popia-section-title">
+          <i class="bi bi-person-check-fill" style="color:var(--dut-navy)"></i>
+          Your Rights
+        </div>
+        <p>
+          Under POPIA, you have the right to access, correct, or request deletion of your
+          personal information. You may contact the DUT Information Officer at
+          <strong>informationofficer@dut.ac.za</strong> to exercise these rights.
+          You may withdraw consent at any time; however, this may affect your ability to
+          use the platform.
+        </p>
+      </div>
+
+      <div class="popia-section">
+        <div class="popia-section-title">
+          <i class="bi bi-building" style="color:var(--dut-navy)"></i>
+          Responsible Party
+        </div>
+        <p>
+          The responsible party for the processing of your personal information is
+          <strong>Durban University of Technology</strong>, Steve Biko Campus,
+          Durban, 4001, South Africa.
+        </p>
+      </div>
+    </div>
+
+    <div class="popia-footer">
+      <div class="popia-checkbox-wrap" id="popiaCheckWrap" onclick="toggleAgreement()">
+        <input type="checkbox" id="popiaAgree" onchange="toggleAgreement()">
+        <label for="popiaAgree">
+          I have read and understood the POPIA Declaration. I consent to DUT collecting and
+          processing my personal information as described above for the purpose of using the
+          DUT Project Hub.
+        </label>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{{ url_for('main.index') }}"
+           class="btn btn-outline-danger px-4 fw-semibold">
+          <i class="bi bi-x-lg me-1"></i>Decline
+        </a>
+        <button id="popiaAcceptBtn"
+                class="btn btn-navy px-4 fw-semibold"
+                disabled
+                onclick="acceptPopia()">
+          <i class="bi bi-check-lg me-1"></i>Accept &amp; Continue
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Registration Form (hidden until POPIA accepted) ── -->
+<div class="auth-wrapper" id="registerWrapper" style="display:none">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-11 col-md-8 col-lg-6">
+        <div class="auth-card fade-up">
+          <div class="auth-card-header">
+            <div class="brand-icon mx-auto mb-3" style="width:52px;height:52px;font-size:1.4rem;">
+              <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <h4 class="text-white fw-bold mb-1">Create an Account</h4>
+            <p class="mb-0" style="color:rgba(255,255,255,.6);font-size:.85rem">Join the DUT Project Hub</p>
+          </div>
+          <div class="auth-card-body">
+
+            <!-- POPIA accepted indicator -->
+            <div class="d-flex align-items-center gap-2 px-3 py-2 mb-3 rounded"
+                 style="background:#d1fae5;border:1px solid #6ee7b7;font-size:.78rem">
+              <i class="bi bi-shield-check-fill text-success"></i>
+              <span class="text-success fw-semibold">POPIA Declaration accepted</span>
+            </div>
+
+            <a href="{{ url_for('auth.microsoft_login') }}" class="btn btn-microsoft mb-2">
+              <svg width="18" height="18" viewBox="0 0 21 21" class="me-2" style="vertical-align:middle">
+                <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                <rect x="11" y="1" width="9" height="9" fill="#00a4ef"/>
+                <rect x="1" y="11" width="9" height="9" fill="#7fba00"/>
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+              </svg>
+              Register with Microsoft (DUT)
+            </a>
+            <div class="divider-or">or register with email</div>
+
+            <form method="post" id="registerForm">
+              <!-- Hidden field to confirm POPIA was accepted -->
+              <input type="hidden" name="popia_accepted" value="1">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                  <input type="text" name="name" class="form-control"
+                         placeholder="e.g. Thembinkosi Ninela" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                  <input type="email" name="email" class="form-control"
+                         placeholder="you@dut.ac.za" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Role <span class="text-danger">*</span></label>
+                  <select name="role" class="form-select" id="roleSelect" required>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty Member</option>
+                  </select>
+                </div>
+                <div class="col-md-6" id="studentNumWrap">
+                  <label class="form-label">Student Number</label>
+                  <input type="text" name="student_number" class="form-control"
+                         placeholder="e.g. 22012520">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Department</label>
+                  <select name="department" class="form-select">
+                    <option value="">Select Department</option>
+                    <option>Accounting</option>
+                    <option>Informatics &amp; Design</option>
+                    <option>Information Technology</option>
+                    <option>Business Administration</option>
+                    <option>Computer Science</option>
+                    <option>Data Science</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Password <span class="text-danger">*</span></label>
+                  <input type="password" name="password" class="form-control"
+                         placeholder="Min. 6 characters" minlength="6" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                  <input type="password" name="confirm_password" class="form-control"
+                         placeholder="Repeat password" required>
+                </div>
+                <div class="col-12 mt-2">
+                  <button type="submit" class="btn btn-navy w-100 py-2 fw-semibold">
+                    <i class="bi bi-person-plus me-2"></i>Create Account
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <p class="text-center mt-4 mb-0 small text-muted">
+              Already have an account?
+              <a href="{{ url_for('auth.login') }}" class="fw-semibold text-decoration-none"
+                 style="color:var(--accent)">Sign in</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── POPIA Modal Logic ─────────────────────────────────────────────────────────
+function toggleAgreement() {
+  const cb  = document.getElementById('popiaAgree');
+  const btn = document.getElementById('popiaAcceptBtn');
+  btn.disabled = !cb.checked;
+  btn.classList.toggle('btn-navy',    cb.checked);
+}
+
+function acceptPopia() {
+  const cb = document.getElementById('popiaAgree');
+  if (!cb.checked) return;
+  // Hide modal, show registration form with animation
+  const overlay = document.getElementById('popiaOverlay');
+  overlay.style.opacity = '1';
+  overlay.style.transition = 'opacity .3s';
+  overlay.style.opacity = '0';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    const wrapper = document.getElementById('registerWrapper');
+    wrapper.style.display = '';
+    wrapper.style.opacity = '0';
+    wrapper.style.transition = 'opacity .35s ease';
+    requestAnimationFrame(() => { wrapper.style.opacity = '1'; });
+  }, 300);
+}
+
+// ── Role → Student Number visibility ─────────────────────────────────────────
+const roleSelect = document.getElementById('roleSelect');
+const snWrap     = document.getElementById('studentNumWrap');
+if (roleSelect) {
+  roleSelect.addEventListener('change', function() {
+    snWrap.style.display = this.value === 'student' ? '' : 'none';
+  });
+}
+
+// If form validation failed on server (flash message) and we returned to
+// register page, skip the POPIA modal since user already accepted it once.
+{% if request.method == 'POST' %}
+document.getElementById('popiaOverlay').style.display = 'none';
+document.getElementById('registerWrapper').style.display = '';
+{% endif %}
+</script>
+{% endblock %}

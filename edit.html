@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Edit Milestone – DUT Project Hub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="page-header-title"><i class="bi bi-pencil me-2"></i>Edit Milestone</div>
+    <div class="page-header-sub">{{ milestone.project.title }}</div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      {# ── Task completion status card ── #}
+      {% set total_tasks = milestone.tasks.count() %}
+      {% set done_tasks  = milestone.tasks.filter_by(is_completed=True).count() %}
+      {% set incomplete  = milestone.incomplete_task_count() %}
+
+      {% if total_tasks > 0 %}
+      <div class="hub-card p-3 mb-3 fade-up"
+           style="border-left:4px solid {{ '#10b981' if incomplete == 0 else '#f59e0b' }}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-semibold small"
+               style="color: {{ '#065f46' if incomplete == 0 else '#92400e' }}">
+            <i class="bi bi-{{ 'check-circle-fill' if incomplete == 0 else 'exclamation-triangle-fill' }} me-1"></i>
+            Task Completion Status
+          </div>
+          <span class="badge-status {{ 'badge-approved' if incomplete == 0 else 'badge-pending' }}">
+            {{ done_tasks }} / {{ total_tasks }} complete
+          </span>
+        </div>
+        {% if incomplete > 0 %}
+        <div class="small text-muted mb-2">
+          <strong>{{ incomplete }} task(s) still incomplete.</strong>
+          All tasks must be completed before this milestone can be marked <em>Completed</em>.
+        </div>
+        {% else %}
+        <div class="small text-success mb-2">All tasks completed — milestone can be marked complete.</div>
+        {% endif %}
+        <div class="d-flex flex-column gap-1">
+          {% for task in milestone.tasks.all() %}
+          <div class="d-flex align-items-center gap-2" style="font-size:.75rem">
+            <i class="bi bi-{{ 'check-circle-fill text-success' if task.is_completed else 'circle text-muted' }}"></i>
+            <span class="{{ 'text-muted text-decoration-line-through' if task.is_completed else '' }}">
+              {{ task.title }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── Date limit reminder ── #}
+      {% if milestone.project.due_date %}
+      <div class="hub-card p-3 mb-3 fade-up" style="border-left:4px solid var(--accent)">
+        <div class="small" style="color:var(--dut-navy)">
+          <i class="bi bi-calendar-check me-1"></i>
+          <strong>Deadline limit:</strong>
+          Milestone due date must be on or before
+          <strong>{{ milestone.project.milestone_deadline_limit().strftime('%d %B %Y') }}</strong>
+          (project due: {{ milestone.project.due_date.strftime('%d %B %Y') }}).
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="hub-card p-4 fade-up fade-up-1">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control"
+                   value="{{ milestone.title }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"
+                      maxlength="500">{{ milestone.description or '' }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Due Date</label>
+            <input type="date" name="deadline" class="form-control"
+                   value="{{ milestone.deadline.strftime('%Y-%m-%d') if milestone.deadline else '' }}"
+                   min="{{ min_deadline }}"
+                   {% if max_deadline %}max="{{ max_deadline }}"{% endif %}>
+            {% if milestone.project.due_date %}
+            <div class="form-text">
+              Latest: <strong>{{ milestone.project.milestone_deadline_limit().strftime('%d %B %Y') }}</strong>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Status</label>
+            {% if incomplete > 0 %}
+              {# Disable Completed option via a read-only display + hidden field #}
+              <select class="form-select" disabled>
+                <option>{{ milestone.status.value.replace('_',' ').title() }} (current)</option>
+                <option disabled>Completed ({{ incomplete }} task(s) must finish first)</option>
+              </select>
+              <input type="hidden" name="status" value="{{ milestone.status.value }}">
+              <div class="form-text text-warning">
+                <i class="bi bi-lock me-1"></i>
+                Cannot set <em>Completed</em> until all {{ incomplete }} task(s) are submitted.
+              </div>
+            {% else %}
+              <select name="status" class="form-select">
+                <option value="pending"     {{ 'selected' if milestone.status.value=='pending' }}>Pending</option>
+                <option value="in_progress" {{ 'selected' if milestone.status.value=='in_progress' }}>In Progress</option>
+                <option value="completed"   {{ 'selected' if milestone.status.value=='completed' }}>Completed</option>
+              </select>
+              {% if total_tasks == 0 %}
+              <div class="form-text text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                No tasks under this milestone — it can be completed directly.
+              </div>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-navy px-4 fw-semibold">
+              <i class="bi bi-check-lg me-2"></i>Save Changes
+            </button>
+            <a href="{{ url_for('projects.detail', project_id=milestone.project_id) }}"
+               class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

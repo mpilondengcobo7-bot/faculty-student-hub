@@ -1,71 +1,205 @@
 {% extends 'base.html' %}
-{% block title %}DUT Project Hub – Faculty Student Collaboration{% endblock %}
+{% block title %}Achievements – DUT Project Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Achievements Page ── */
+.achievements-header {
+  background: linear-gradient(135deg, #002147 0%, #003b6e 50%, #1e6fbf 100%);
+  padding: 2.5rem 0 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.achievements-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20l10-10M10 30l10-10M0 40l20-20M20 0L40 20' stroke='%23ffffff' stroke-opacity='0.04' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+.progress-ring { transform: rotate(-90deg); }
+.progress-ring-circle { transition: stroke-dashoffset 1s ease; }
+
+/* Badge Grid */
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+
+.badge-card {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  transition: all .25s;
+  position: relative;
+  overflow: hidden;
+}
+.badge-card.earned {
+  border-color: transparent;
+  box-shadow: 0 4px 20px rgba(0,0,0,.1);
+}
+.badge-card.earned:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,.14); }
+.badge-card.locked { opacity: .45; filter: grayscale(1); }
+.badge-card.locked:hover { opacity: .6; }
+
+.badge-shine {
+  position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
+  transform: skewX(-20deg);
+  transition: left .6s;
+}
+.badge-card.earned:hover .badge-shine { left: 130%; }
+
+.badge-icon-wrap {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+  font-size: 1.6rem;
+  position: relative;
+}
+.badge-icon-wrap.locked-icon { background: #e5e7eb; color: #9ca3af; }
+
+.badge-label { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.badge-desc  { font-size: .72rem; color: var(--text-muted); line-height: 1.4; }
+.badge-date  { font-size: .68rem; color: var(--text-muted); margin-top: 6px; }
+
+.earned-check {
+  position: absolute; top: 8px; right: 8px;
+  width: 20px; height: 20px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .65rem;
+}
+
+/* Certificate Cards */
+.cert-card {
+  background: linear-gradient(135deg, #fffdf5 0%, #fff9e8 100%);
+  border: 2px solid #c8972c;
+  border-radius: 16px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all .25s;
+}
+.cert-card::before {
+  content: '';
+  position: absolute; top: -30px; right: -30px;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(200,151,44,.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.cert-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(200,151,44,.2); }
+
+.cert-seal {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #002147, #003b6e);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #c8972c;
+  font-size: 1.4rem;
+  border: 3px solid #c8972c;
+  flex-shrink: 0;
+}
+
+/* Stats bar */
+.achievement-stat {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  padding: .75rem 1.25rem;
+  text-align: center;
+  backdrop-filter: blur(4px);
+}
+
+/* Tab styling */
+.achievements-tabs .nav-link {
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: .6rem 1.25rem;
+  font-weight: 600;
+  font-size: .875rem;
+  transition: all .2s;
+}
+.achievements-tabs .nav-link.active {
+  color: var(--dut-navy);
+  border-bottom-color: var(--dut-gold);
+  background: none;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Hero -->
-<section class="hero">
+{% set viewing_self = not profile_user is defined %}
+{% set display_user = profile_user if profile_user is defined else current_user %}
+
+<!-- Header -->
+<div class="achievements-header">
   <div class="container-xxl position-relative">
-    <div class="row align-items-center g-5">
-      <div class="col-lg-6 fade-up">
-        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3"
-             style="background:rgba(200,151,44,.15);border-radius:50px;border:1px solid rgba(200,151,44,.3)">
-          <i class="bi bi-mortarboard text-warning small"></i>
-          <span style="font-size:.78rem;color:var(--dut-gold-lt);font-weight:600;letter-spacing:.5px">
-            DURBAN UNIVERSITY OF TECHNOLOGY
-          </span>
-        </div>
-        <h1 class="hero-title">
-          Where <span class="hero-highlight">Faculty</span> &amp;<br>
-          Students <span class="hero-highlight">Collaborate</span>
-        </h1>
-        <p class="hero-subtitle mb-4">
-          A centralized platform for academic project collaboration. Post projects, track milestones, and build knowledge — together.
-        </p>
-        <div class="d-flex flex-wrap gap-3">
-          <a href="{{ url_for('auth.register') }}" class="btn btn-gold btn-lg px-4 rounded-pill fw-bold">
-            <i class="bi bi-person-plus me-2"></i>Get Started
-          </a>
-          <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
-            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-          </a>
+    <div class="row align-items-center g-4">
+      <div class="col-md-7">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="user-avatar" style="width:56px;height:56px;font-size:1.4rem;
+               background:linear-gradient(135deg,var(--dut-gold),#e8b84b);color:var(--dut-navy)">
+            {{ display_user.name[0].upper() }}
+          </div>
+          <div>
+            <h2 class="text-white fw-bold mb-0" style="font-size:1.5rem">
+              {{ display_user.name }}'s Achievements
+            </h2>
+            <div style="color:rgba(255,255,255,.6);font-size:.85rem">
+              {% if display_user.student_number %}#{{ display_user.student_number }} · {% endif %}
+              {{ display_user.department or 'DUT' }}
+            </div>
+          </div>
         </div>
 
-        <div class="d-flex gap-4 mt-5">
-          <div>
-            <div style="font-size:1.5rem;font-weight:700;color:var(--dut-gold)">500+</div>
-            <div style="font-size:.78rem;color:rgba(255,255,255,.6)">Active Students</div>
+        <!-- Progress ring + text -->
+        <div class="d-flex align-items-center gap-4">
+          <div class="position-relative" style="width:80px;height:80px">
+            <svg class="progress-ring" width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="7"/>
+              <circle class="progress-ring-circle" cx="40" cy="40" r="34" fill="none"
+                      stroke="#c8972c" stroke-width="7" stroke-linecap="round"
+                      stroke-dasharray="213.6"
+                      stroke-dashoffset="{{ 213.6 - (213.6 * earned_count / total_badges) }}"
+                      id="progressCircle"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                 align-items:center;justify-content:center">
+              <div style="font-size:1.1rem;font-weight:800;color:#fff;line-height:1">{{ earned_count }}</div>
+              <div style="font-size:.6rem;color:rgba(255,255,255,.6);text-transform:uppercase">badges</div>
+            </div>
           </div>
-          <div style="width:1px;background:rgba(255,255,255,.15)"></div>
           <div>
-            <div style="font-size:1.5rem;font-weight:700;color:var(--dut-gold)">80+</div>
-            <div style="font-size:.78rem;color:rgba(255,255,255,.6)">Projects Posted</div>
-          </div>
-          <div style="width:1px;background:rgba(255,255,255,.15)"></div>
-          <div>
-            <div style="font-size:1.5rem;font-weight:700;color:var(--dut-gold)">6</div>
-            <div style="font-size:.78rem;color:rgba(255,255,255,.6)">Departments</div>
+            <div style="color:rgba(255,255,255,.85);font-size:.9rem;font-weight:600">
+              {{ earned_count }} of {{ total_badges }} badges earned
+            </div>
+            <div class="mt-1" style="width:180px;height:6px;background:rgba(255,255,255,.15);border-radius:50px;overflow:hidden">
+              <div style="height:100%;width:{{ (earned_count / total_badges * 100)|int }}%;
+                   background:linear-gradient(90deg,#c8972c,#f5d98b);border-radius:50px;
+                   transition:width 1s ease"></div>
+            </div>
+            <div style="color:rgba(255,255,255,.5);font-size:.75rem;margin-top:4px">
+              {{ certificates|length }} certificate{{ 's' if certificates|length != 1 }} earned
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="col-lg-5 offset-lg-1 fade-up fade-up-2">
-        <div class="hero-card">
-          <div class="fw-semibold mb-3" style="font-size:.85rem;letter-spacing:.5px;color:var(--dut-gold)">
-            <i class="bi bi-stars me-1"></i>PLATFORM FEATURES
-          </div>
-          {% set features = [
-            ('folder2-open', 'Project Management', 'Faculty post, edit and manage academic projects with rich descriptions and milestones.'),
-            ('people-fill', 'Student Applications', 'Students browse, filter and apply to join projects that match their interests.'),
-            ('flag-fill', 'Milestone Tracking', 'Track project progress through structured milestones and task submissions.'),
-            ('chat-left-dots-fill', 'Feedback System', 'Faculty review student work and provide detailed feedback per submission.'),
-            ('bell-fill', 'Notifications', 'Real-time in-app and email notifications keep everyone informed.')
+      <!-- Stats -->
+      <div class="col-md-5">
+        <div class="row g-2">
+          {% for val, label, icon in [
+            (earned_count, 'Badges Earned', 'award'),
+            (certificates|length, 'Certificates', 'patch-check'),
+            (display_user.joined_projects.count() if display_user.is_student else display_user.posted_projects.count(), 'Projects', 'folder2-open')
           ] %}
-          {% for icon, title, desc in features %}
-          <div class="d-flex align-items-start gap-3 mb-3">
-            <div class="feature-icon-hero"><i class="bi bi-{{ icon }}"></i></div>
-            <div>
-              <div style="font-weight:600;font-size:.88rem;color:rgba(255,255,255,.9)">{{ title }}</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.5">{{ desc }}</div>
+          <div class="col-4">
+            <div class="achievement-stat">
+              <div style="font-size:1.4rem;font-weight:700;color:#fff">{{ val }}</div>
+              <div style="font-size:.68rem;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px">{{ label }}</div>
             </div>
           </div>
           {% endfor %}
@@ -73,38 +207,149 @@
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- How It Works -->
-<section class="py-5 bg-white">
-  <div class="container-xxl">
-    <div class="text-center mb-5">
-      <h2 class="fw-bold" style="color:var(--dut-navy)">How It Works</h2>
-      <p class="text-muted">A simple workflow for both faculty and students</p>
-    </div>
-    <div class="row g-4">
-      {% for step, icon, title, desc in [
-        ('01','mortarboard','Faculty Posts Project','Define objectives, requirements, milestones and open the project for student applications.'),
-        ('02','search','Students Discover & Apply','Browse available projects, filter by department, and send an application with a personal message.'),
-        ('03','check2-circle','Faculty Reviews & Approves','Review applications and approve students to join the project team.'),
-        ('04','graph-up','Track Progress Together','Monitor milestones, submit tasks, receive feedback and record final outcomes.')
-      ] %}
-      <div class="col-md-3 text-center fade-up" style="animation-delay:{{ loop.index0 * 0.08 }}s">
-        <div class="position-relative d-inline-block mb-3">
-          <div style="width:64px;height:64px;background:var(--accent-lt);border-radius:50%;
-               display:flex;align-items:center;justify-content:center;margin:auto;font-size:1.5rem;
-               color:var(--dut-navy)">
-            <i class="bi bi-{{ icon }}"></i>
+<!-- Content Tabs -->
+<div class="container-xxl mt-4">
+  <ul class="nav achievements-tabs border-bottom mb-4">
+    <li class="nav-item">
+      <a class="nav-link active" data-bs-toggle="tab" href="#badges-tab">
+        <i class="bi bi-award me-1"></i>Badges
+        <span class="badge bg-secondary rounded-pill ms-1" style="font-size:.68rem">{{ earned_count }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#certs-tab">
+        <i class="bi bi-patch-check me-1"></i>Certificates
+        <span class="badge bg-secondary rounded-pill ms-1" style="font-size:.68rem">{{ certificates|length }}</span>
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Badges Tab -->
+    <div class="tab-pane fade show active" id="badges-tab">
+      <!-- Earned badges section -->
+      {% set earned_list = all_badges | selectattr('earned') | list %}
+      {% if earned_list %}
+      <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:.75rem;letter-spacing:.8px">
+        <i class="bi bi-star-fill text-warning me-1"></i>Earned ({{ earned_list|length }})
+      </h6>
+      <div class="badge-grid mb-5">
+        {% for b in earned_list %}
+        <div class="badge-card earned fade-up" style="animation-delay:{{ loop.index0 * 0.04 }}s">
+          <div class="badge-shine"></div>
+          <div class="earned-check"><i class="bi bi-check-lg"></i></div>
+          <div class="badge-icon-wrap" style="background:{{ b.meta.color }}22;color:{{ b.meta.color }}">
+            <i class="bi bi-{{ b.meta.icon }}"></i>
           </div>
-          <span style="position:absolute;top:-6px;right:-6px;background:var(--dut-navy);color:var(--dut-gold);
-               font-size:.62rem;font-weight:800;width:22px;height:22px;border-radius:50%;
-               display:flex;align-items:center;justify-content:center;">{{ step }}</span>
+          <div class="badge-label">{{ b.meta.label }}</div>
+          <div class="badge-desc">{{ b.meta.desc }}</div>
+          {% if b.earned %}
+          <div class="badge-date"><i class="bi bi-calendar2 me-1"></i>{{ b.earned.awarded_at.strftime('%d %b %Y') }}</div>
+          {% endif %}
+          {% if b.earned and b.earned.project %}
+          <div class="badge-date text-truncate" style="font-size:.65rem">
+            <i class="bi bi-folder2 me-1"></i>{{ b.earned.project.title }}
+          </div>
+          {% endif %}
         </div>
-        <h5 class="fw-bold mb-2" style="color:var(--dut-navy)">{{ title }}</h5>
-        <p class="text-muted small">{{ desc }}</p>
+        {% endfor %}
       </div>
-      {% endfor %}
+      {% endif %}
+
+      <!-- Locked badges -->
+      {% set locked_list = all_badges | rejectattr('earned') | list %}
+      {% if locked_list %}
+      <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:.75rem;letter-spacing:.8px">
+        <i class="bi bi-lock me-1"></i>Locked ({{ locked_list|length }})
+      </h6>
+      <div class="badge-grid">
+        {% for b in locked_list %}
+        <div class="badge-card locked" data-bs-toggle="tooltip" title="{{ b.meta.desc }}">
+          <div class="badge-icon-wrap locked-icon">
+            <i class="bi bi-lock-fill"></i>
+          </div>
+          <div class="badge-label">{{ b.meta.label }}</div>
+          <div class="badge-desc">{{ b.meta.desc }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if not earned_list and not locked_list %}
+      <div class="empty-state"><div class="empty-icon"><i class="bi bi-award"></i></div>
+        <p>No badges yet. Join a project to get started!</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Certificates Tab -->
+    <div class="tab-pane fade" id="certs-tab">
+      {% if certificates %}
+      <div class="row g-3">
+        {% for cert in certificates %}
+        <div class="col-md-6 col-lg-4 fade-up" style="animation-delay:{{ loop.index0 * 0.06 }}s">
+          <div class="cert-card">
+            <div class="d-flex align-items-start gap-3 mb-3">
+              <div class="cert-seal"><i class="bi bi-mortarboard-fill"></i></div>
+              <div class="flex-grow-1">
+                <div class="fw-bold" style="font-size:.95rem;color:var(--dut-navy)">{{ cert.project.title }}</div>
+                <div class="text-muted small">{{ cert.project.department or 'DUT' }}</div>
+              </div>
+            </div>
+            <div class="small text-muted mb-1">
+              <i class="bi bi-person me-1"></i>Supervised by {{ cert.issued_by or cert.project.faculty.name }}
+            </div>
+            <div class="small text-muted mb-3">
+              <i class="bi bi-calendar2 me-1"></i>Issued {{ cert.issued_at.strftime('%d %B %Y') }}
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <code style="font-size:.68rem;color:#888;background:#f3f4f6;padding:3px 8px;border-radius:6px">
+                {{ cert.certificate_number }}
+              </code>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('achievements.view_certificate', cert_id=cert.id) }}"
+                   class="btn btn-sm btn-navy" style="font-size:.75rem">
+                  <i class="bi bi-eye me-1"></i>View
+                </a>
+                <a href="{{ url_for('achievements.print_certificate', cert_id=cert.id) }}"
+                   class="btn btn-sm btn-gold" style="font-size:.75rem" target="_blank">
+                  <i class="bi bi-printer me-1"></i>Print
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state hub-card p-5">
+        <div class="empty-icon"><i class="bi bi-patch-check"></i></div>
+        <p class="fw-semibold">No certificates yet</p>
+        <p class="text-muted small">Certificates are issued when a project you participated in is marked as completed by your faculty.</p>
+        <a href="{{ url_for('projects.list_projects') }}" class="btn btn-navy btn-sm mt-2">
+          <i class="bi bi-search me-1"></i>Find Projects
+        </a>
+      </div>
+      {% endif %}
     </div>
   </div>
-</section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animate progress circle on load
+document.addEventListener('DOMContentLoaded', function() {
+  const circle = document.getElementById('progressCircle');
+  if (circle) {
+    const target = parseFloat(circle.getAttribute('stroke-dashoffset'));
+    circle.style.strokeDashoffset = '213.6';
+    setTimeout(() => {
+      circle.style.transition = 'stroke-dashoffset 1.2s ease';
+      circle.style.strokeDashoffset = target;
+    }, 300);
+  }
+});
+</script>
 {% endblock %}

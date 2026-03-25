@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% block title %}Certificate – {{ cert.project.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+.cert-page { background: #f0ece4; min-height: calc(100vh - 70px); padding: 2rem 0 4rem; }
+
+.certificate {
+  max-width: 860px;
+  margin: 0 auto;
+  background: #fffdf7;
+  border: 1px solid #d4b483;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15), 0 4px 16px rgba(0,0,0,.1);
+}
+
+/* Outer decorative border */
+.certificate::before {
+  content: '';
+  position: absolute; inset: 10px;
+  border: 2px solid #c8972c;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Corner ornaments */
+.corner {
+  position: absolute; width: 60px; height: 60px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q0 60 60 60' fill='none' stroke='%23c8972c' stroke-width='2'/%3E%3Cpath d='M10 0 Q10 50 60 50' fill='none' stroke='%23c8972c' stroke-opacity='0.4' stroke-width='1'/%3E%3C/svg%3E");
+  z-index: 2;
+}
+.corner.tl { top: 0; left: 0; }
+.corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+.corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+.corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+/* Header band */
+.cert-header {
+  background: linear-gradient(135deg, #002147 0%, #003b6e 60%, #1e4d8c 100%);
+  padding: 2rem 3rem 1.5rem;
+  text-align: center;
+  position: relative;
+}
+.cert-header::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #c8972c, #f5d98b, #c8972c, transparent);
+}
+
+.cert-dut-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #c8972c;
+  letter-spacing: 4px;
+  margin-bottom: 2px;
+}
+.cert-inst-name {
+  color: rgba(255,255,255,.65);
+  font-size: .72rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.cert-faculty {
+  color: rgba(255,255,255,.45);
+  font-size: .65rem;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
+
+/* Body */
+.cert-body { padding: 2.5rem 4rem 2rem; text-align: center; position: relative; z-index: 3; }
+
+.cert-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.9rem;
+  color: #002147;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: .4rem;
+}
+.cert-subtitle {
+  font-size: .78rem;
+  color: #9a7b4f;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1.8rem;
+}
+
+.cert-presented { font-size: .85rem; color: #6b5b3e; margin-bottom: .5rem; }
+
+.cert-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.4rem;
+  color: #002147;
+  font-style: italic;
+  border-bottom: 2px solid #c8972c;
+  display: inline-block;
+  padding-bottom: 6px;
+  margin-bottom: 1.8rem;
+  line-height: 1.2;
+}
+
+.cert-body-text { font-size: .88rem; color: #5a4a35; margin-bottom: .6rem; line-height: 1.6; }
+
+.cert-project-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #003366;
+  margin: .75rem 0;
+}
+
+/* Seal */
+.cert-seal-wrap {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #002147, #003b6e);
+  border: 4px solid #c8972c;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 16px rgba(0,33,71,.25), inset 0 2px 4px rgba(200,151,44,.2);
+  position: relative;
+}
+.cert-seal-wrap::after {
+  content: '';
+  position: absolute; inset: 6px;
+  border-radius: 50%;
+  border: 1px dashed rgba(200,151,44,.4);
+}
+
+/* Signature area */
+.cert-signatures {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 1.5rem 4rem 0;
+  border-top: 1px solid #e8dcc8;
+  margin: 0 2rem;
+}
+.cert-sig-block { text-align: center; min-width: 160px; }
+.cert-sig-line { border-bottom: 1.5px solid #8b7355; margin-bottom: 6px; padding-bottom: 2px; }
+.cert-sig-name { font-size: .8rem; font-weight: 700; color: #002147; }
+.cert-sig-role { font-size: .7rem; color: #9a7b4f; letter-spacing: .5px; }
+
+/* Footer */
+.cert-footer {
+  padding: 1.2rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px dashed #d4b483;
+  margin-top: 1rem;
+}
+.cert-number {
+  font-family: monospace;
+  font-size: .72rem;
+  color: #b0956e;
+  letter-spacing: .5px;
+}
+.cert-date { font-size: .75rem; color: #9a7b4f; }
+
+/* Background watermark */
+.cert-watermark {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: .025; font-size: 10rem; font-weight: 900;
+  color: #002147; pointer-events: none; z-index: 0;
+  font-family: 'Playfair Display', serif;
+  transform: rotate(-20deg);
+  letter-spacing: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cert-page">
+  <!-- Action bar -->
+  <div class="container-xxl mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="{{ url_for('achievements.index') }}" class="btn btn-outline-navy btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to Achievements
+      </a>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('achievements.print_certificate', cert_id=cert.id) }}"
+           class="btn btn-gold btn-sm fw-semibold" target="_blank">
+          <i class="bi bi-printer me-1"></i>Print / Save as PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Certificate -->
+  <div class="container-xxl">
+    <div class="certificate">
+      <!-- Corner ornaments -->
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <!-- Watermark -->
+      <div class="cert-watermark">DUT</div>
+
+      <!-- Header -->
+      <div class="cert-header">
+        <div class="cert-dut-logo">DUT</div>
+        <div class="cert-inst-name">Durban University of Technology</div>
+        <div class="cert-faculty">Faculty of Accounting &amp; Informatics</div>
+      </div>
+
+      <!-- Body -->
+      <div class="cert-body">
+        <div class="cert-seal-wrap">
+          <i class="bi bi-mortarboard-fill" style="font-size:2rem;color:#c8972c"></i>
+        </div>
+
+        <div class="cert-title">Certificate</div>
+        <div class="cert-subtitle">of Completion</div>
+
+        <div class="cert-presented">This certificate is proudly presented to</div>
+
+        <div class="cert-name">{{ cert.user.name }}</div>
+
+        <div class="cert-body-text">
+          {% if cert.user.student_number %}
+          <strong>Student No: {{ cert.user.student_number }}</strong> ·
+          {% endif %}
+          {{ cert.user.department or 'Faculty of Accounting & Informatics' }}
+        </div>
+        <div class="cert-body-text">for the successful completion of the collaborative academic project</div>
+
+        <div class="cert-project-title">{{ cert.project.title }}</div>
+
+        <div class="cert-body-text">
+          under the supervision of <strong>{{ cert.issued_by or cert.project.faculty.name }}</strong>
+          {% if cert.project.department %}, {{ cert.project.department }}{% endif %}
+        </div>
+        <div class="cert-body-text" style="margin-top:.5rem">
+          <em>Demonstrating commitment, collaboration, and academic excellence.</em>
+        </div>
+      </div>
+
+      <!-- Signatures -->
+      <div class="cert-signatures">
+        <div class="cert-sig-block">
+          <div class="cert-sig-line" style="min-width:150px">&nbsp;</div>
+          <div class="cert-sig-name">{{ cert.issued_by or cert.project.faculty.name }}</div>
+          <div class="cert-sig-role">Project Supervisor</div>
+        </div>
+        <div class="text-center" style="color:#c8972c;font-size:1.5rem">★</div>
+        <div class="cert-sig-block">
+          <div class="cert-sig-line" style="min-width:150px">&nbsp;</div>
+          <div class="cert-sig-name">Head of Department</div>
+          <div class="cert-sig-role">Faculty of Accounting &amp; Informatics</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="cert-footer">
+        <div class="cert-number">Cert No: {{ cert.certificate_number }}</div>
+        <div style="color:#c8972c;font-size:1rem">✦ ✦ ✦</div>
+        <div class="cert-date">Issued: {{ cert.issued_at.strftime('%d %B %Y') }}</div>
+      </div>
+    </div>
+
+    <!-- Verification note -->
+    <div class="text-center mt-3">
+      <small class="text-muted">
+        <i class="bi bi-shield-check me-1 text-success"></i>
+        This certificate can be verified using certificate number
+        <code>{{ cert.certificate_number }}</code> on the DUT Project Hub.
+      </small>
+    </div>
+  </div>
+</div>
+{% endblock %}

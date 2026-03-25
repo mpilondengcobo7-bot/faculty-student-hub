@@ -1,0 +1,7 @@
+{# Reusable mini badge macro #}
+{% macro badge_mini(badge) %}
+<div class="mini-badge" style="background:{{ badge.meta.color }}22;color:{{ badge.meta.color }}"
+     data-bs-toggle="tooltip" title="{{ badge.meta.label }}">
+  <i class="bi bi-{{ badge.meta.icon }}"></i>
+</div>
+{% endmacro %}

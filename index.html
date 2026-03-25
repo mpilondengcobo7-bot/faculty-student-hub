@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}DUT Project Hub – Faculty Student Collaboration{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+  <div class="container-xxl position-relative">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 fade-up">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3"
+             style="background:rgba(200,151,44,.15);border-radius:50px;border:1px solid rgba(200,151,44,.3)">
+          <i class="bi bi-mortarboard text-warning small"></i>
+          <span style="font-size:.78rem;color:var(--dut-gold-lt);font-weight:600;letter-spacing:.5px">
+            DURBAN UNIVERSITY OF TECHNOLOGY
+          </span>
+        </div>
+        <h1 class="hero-title">
+          Where <span class="hero-highlight">Faculty</span> &amp;<br>
+          Students <span class="hero-highlight">Collaborate</span>
+        </h1>
+        <p class="hero-subtitle mb-4">
+          A centralized platform for academic project collaboration. Post projects, track milestones, and build knowledge — together.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('auth.register') }}" class="btn btn-gold btn-lg px-4 rounded-pill fw-bold">
+            <i class="bi bi-person-plus me-2"></i>Get Started
+          </a>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4 rounded-pill">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          </a>
+        </div>
+
+        <div class="d-flex gap-4 mt-5">
+          <div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--dut-gold)">500+</div>
+            <div style="font-size:.78rem;color:rgba(255,255,255,.6)">Active Students</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,.15)"></div>
+          <div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--dut-gold)">80+</div>
+            <div style="font-size:.78rem;color:rgba(255,255,255,.6)">Projects Posted</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,.15)"></div>
+          <div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--dut-gold)">6</div>
+            <div style="font-size:.78rem;color:rgba(255,255,255,.6)">Departments</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5 offset-lg-1 fade-up fade-up-2">
+        <div class="hero-card">
+          <div class="fw-semibold mb-3" style="font-size:.85rem;letter-spacing:.5px;color:var(--dut-gold)">
+            <i class="bi bi-stars me-1"></i>PLATFORM FEATURES
+          </div>
+          {% set features = [
+            ('folder2-open', 'Project Management', 'Faculty post, edit and manage academic projects with rich descriptions and milestones.'),
+            ('people-fill', 'Student Applications', 'Students browse, filter and apply to join projects that match their interests.'),
+            ('flag-fill', 'Milestone Tracking', 'Track project progress through structured milestones and task submissions.'),
+            ('chat-left-dots-fill', 'Feedback System', 'Faculty review student work and provide detailed feedback per submission.'),
+            ('bell-fill', 'Notifications', 'Real-time in-app and email notifications keep everyone informed.')
+          ] %}
+          {% for icon, title, desc in features %}
+          <div class="d-flex align-items-start gap-3 mb-3">
+            <div class="feature-icon-hero"><i class="bi bi-{{ icon }}"></i></div>
+            <div>
+              <div style="font-weight:600;font-size:.88rem;color:rgba(255,255,255,.9)">{{ title }}</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.5">{{ desc }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5 bg-white">
+  <div class="container-xxl">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold" style="color:var(--dut-navy)">How It Works</h2>
+      <p class="text-muted">A simple workflow for both faculty and students</p>
+    </div>
+    <div class="row g-4">
+      {% for step, icon, title, desc in [
+        ('01','mortarboard','Faculty Posts Project','Define objectives, requirements, milestones and open the project for student applications.'),
+        ('02','search','Students Discover & Apply','Browse available projects, filter by department, and send an application with a personal message.'),
+        ('03','check2-circle','Faculty Reviews & Approves','Review applications and approve students to join the project team.'),
+        ('04','graph-up','Track Progress Together','Monitor milestones, submit tasks, receive feedback and record final outcomes.')
+      ] %}
+      <div class="col-md-3 text-center fade-up" style="animation-delay:{{ loop.index0 * 0.08 }}s">
+        <div class="position-relative d-inline-block mb-3">
+          <div style="width:64px;height:64px;background:var(--accent-lt);border-radius:50%;
+               display:flex;align-items:center;justify-content:center;margin:auto;font-size:1.5rem;
+               color:var(--dut-navy)">
+            <i class="bi bi-{{ icon }}"></i>
+          </div>
+          <span style="position:absolute;top:-6px;right:-6px;background:var(--dut-navy);color:var(--dut-gold);
+               font-size:.62rem;font-weight:800;width:22px;height:22px;border-radius:50%;
+               display:flex;align-items:center;justify-content:center;">{{ step }}</span>
+        </div>
+        <h5 class="fw-bold mb-2" style="color:var(--dut-navy)">{{ title }}</h5>
+        <p class="text-muted small">{{ desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Scheduler – Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="page-header-title"><i class="bi bi-clock-history me-2"></i>Background Scheduler</div>
+    <div class="page-header-sub">Task due-today reminder job status</div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Status card -->
+      <div class="hub-card p-4 mb-4 fade-up"
+           style="border-left: 4px solid {{ '#10b981' if running else '#ef4444' }}">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon {{ 'green' if running else 'red' }}"
+               style="width:48px;height:48px;font-size:1.2rem">
+            <i class="bi bi-{{ 'play-circle-fill' if running else 'stop-circle-fill' }}"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-6">
+              Scheduler is <span class="{{ 'text-success' if running else 'text-danger' }}">
+                {{ 'Running' if running else 'Stopped' }}
+              </span>
+            </div>
+            <div class="text-muted small">
+              The reminder job fires every <strong>4 hours</strong> and checks for
+              incomplete tasks due today.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jobs table -->
+      <div class="hub-card p-0 mb-4 fade-up fade-up-1">
+        <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0"><i class="bi bi-list-task me-2"></i>Scheduled Jobs</h6>
+          <form method="post" action="{{ url_for('admin.scheduler_run_now') }}">
+            <button type="submit" class="btn btn-gold btn-sm fw-semibold"
+                    data-confirm="Run the reminder job right now? This will immediately send notifications to all students with tasks due today that are not yet submitted.">
+              <i class="bi bi-lightning-charge-fill me-1"></i>Run Now (Test)
+            </button>
+          </form>
+        </div>
+        {% if jobs %}
+        <div class="table-responsive">
+          <table class="hub-table">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Name</th>
+                <th>Next Run (UTC)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+              <tr>
+                <td><code style="font-size:.78rem">{{ job.id }}</code></td>
+                <td class="fw-semibold small">{{ job.name }}</td>
+                <td class="text-muted small">
+                  <i class="bi bi-clock me-1"></i>{{ job.next_run }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state p-4">
+          <i class="bi bi-calendar-x" style="font-size:2rem;opacity:.3"></i>
+          <p class="mt-2 text-muted small">No jobs registered.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- How it works -->
+      <div class="hub-card p-4 fade-up fade-up-2">
+        <h6 class="fw-bold mb-3">
+          <i class="bi bi-info-circle me-2 text-primary"></i>How the Reminder Works
+        </h6>
+        <div class="d-flex flex-column gap-2" style="font-size:.85rem">
+          <div class="d-flex gap-2">
+            <i class="bi bi-1-circle-fill text-primary mt-1 flex-shrink-0"></i>
+            <span>Every <strong>4 hours</strong> the scheduler scans all tasks
+              whose <em>due date</em> is <strong>today</strong>.</span>
+          </div>
+          <div class="d-flex gap-2">
+            <i class="bi bi-2-circle-fill text-primary mt-1 flex-shrink-0"></i>
+            <span>For each incomplete task, it finds the students who must submit
+              (either the assigned student, or all project participants).</span>
+          </div>
+          <div class="d-flex gap-2">
+            <i class="bi bi-3-circle-fill text-primary mt-1 flex-shrink-0"></i>
+            <span>If a student has <strong>not yet submitted</strong> and has not been
+              reminded in the last 4 hours, they receive an
+              <strong>in-app notification</strong> and an <strong>email</strong>.</span>
+          </div>
+          <div class="d-flex gap-2">
+            <i class="bi bi-4-circle-fill text-primary mt-1 flex-shrink-0"></i>
+            <span>Once a student submits their work, reminders for that task stop
+              automatically.</span>
+          </div>
+          <div class="d-flex gap-2">
+            <i class="bi bi-5-circle-fill text-primary mt-1 flex-shrink-0"></i>
+            <span>Reminders only fire on the <strong>due date itself</strong> —
+              no advance warnings are sent by this job.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Manage Users – Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="page-header-title"><i class="bi bi-people me-2"></i>User Management</div>
+    <div class="page-header-sub">{{ users|length }} users in the system</div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <!-- Filters -->
+  <div class="hub-card p-3 mb-4 fade-up">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <input type="text" name="q" class="form-control" placeholder="Search by name or email..." value="{{ search }}">
+      </div>
+      <div class="col-md-3">
+        <select name="role" class="form-select">
+          <option value="">All Roles</option>
+          <option value="student" {% if role=='student' %}selected{% endif %}>Students</option>
+          <option value="faculty" {% if role=='faculty' %}selected{% endif %}>Faculty</option>
+          <option value="admin" {% if role=='admin' %}selected{% endif %}>Admins</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-navy w-100">Filter</button>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary w-100">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="hub-card p-0 fade-up">
+    <div class="table-responsive">
+      <table class="hub-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Department</th>
+            <th>Joined</th>
+            <th>Last Login</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="user-avatar" style="width:36px;height:36px;background:linear-gradient(135deg,var(--dut-navy),var(--accent))">
+                  {{ u.name[0].upper() }}
+                </div>
+                <div>
+                  <div class="fw-semibold">{{ u.name }}</div>
+                  <div class="text-muted small">{{ u.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="role-pill role-{{ u.role.value }}">{{ u.role.value }}</span>
+            </td>
+            <td class="text-muted small">{{ u.department or '—' }}</td>
+            <td class="text-muted small">{{ u.created_at.strftime('%d %b %Y') }}</td>
+            <td class="text-muted small">{{ u.last_login.strftime('%d %b %Y') if u.last_login else 'Never' }}</td>
+            <td>
+              <span class="badge-status {{ 'badge-approved' if u.is_active else 'badge-rejected' }}">
+                {{ 'Active' if u.is_active else 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <!-- Change Role -->
+                <form method="post" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="d-inline">
+                  <select name="role" class="form-select form-select-sm d-inline-block" style="width:100px" onchange="this.form.submit()">
+                    <option value="student" {% if u.role.value=='student' %}selected{% endif %}>Student</option>
+                    <option value="faculty" {% if u.role.value=='faculty' %}selected{% endif %}>Faculty</option>
+                    <option value="admin" {% if u.role.value=='admin' %}selected{% endif %}>Admin</option>
+                  </select>
+                </form>
+                <!-- View Achievements -->
+                {% if u.role.value == 'student' %}
+                <a href="{{ url_for('achievements.user_achievements', user_id=u.id) }}"
+                   class="btn btn-sm btn-outline-navy" data-bs-toggle="tooltip" title="View Achievements">
+                  <i class="bi bi-trophy"></i>
+                </a>
+                {% endif %}
+                <!-- Toggle Active -->
+                <form method="post" action="{{ url_for('admin.toggle_user', user_id=u.id) }}" class="d-inline">
+                  <button class="btn btn-sm {{ 'btn-outline-danger' if u.is_active else 'btn-outline-success' }}"
+                          data-bs-toggle="tooltip"
+                          title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                    <i class="bi bi-{{ 'person-x' if u.is_active else 'person-check' }}"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

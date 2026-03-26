@@ -33,3 +33,4 @@ class Config:
     UPLOAD_FOLDER       = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads', 'submissions')
     MAX_CONTENT_LENGTH  = 50 * 1024 * 1024
     ALLOWED_EXTENSIONS  = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'png', 'jpeg', 'jpg'}
+

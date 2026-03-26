@@ -164,3 +164,4 @@ def issue_project_certificates(project):
 
     db.session.commit()
     return issued
+      

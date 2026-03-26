@@ -89,3 +89,4 @@ def create_app(config_class=Config):
         return redirect(req.referrer or '/')
 
     return app
+

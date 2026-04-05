@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – DUT Project Hub{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <div class="page-header-title">
+          Welcome, {{ current_user.name.split()[0] }} &#128075;
+        </div>
+        <div class="page-header-sub">
+          <span class="role-pill role-faculty me-2"><i class="bi bi-mortarboard-fill me-1"></i>Faculty</span>
+          {% if current_user.department %}{{ current_user.department }}{% endif %}
+        </div>
+      </div>
+      <a href="{{ url_for('projects.create') }}" class="btn btn-gold fw-semibold">
+        <i class="bi bi-plus-lg me-1"></i>New Project
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3 fade-up fade-up-1">
+      <div class="stat-card">
+        <div class="stat-icon navy"><i class="bi bi-folder2-open"></i></div>
+        <div>
+          <div class="stat-value">{{ total_projects }}</div>
+          <div class="stat-label">Total Projects</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-2">
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="bi bi-activity"></i></div>
+        <div>
+          <div class="stat-value">{{ active_projects }}</div>
+          <div class="stat-label">Active</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-3">
+      <div class="stat-card">
+        <div class="stat-icon gold"><i class="bi bi-person-check"></i></div>
+        <div>
+          <div class="stat-value">{{ pending_apps }}</div>
+          <div class="stat-label">Pending Applications</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-4">
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="bi bi-flag-fill"></i></div>
+        <div>
+          <div class="stat-value">{{ upcoming_milestones|length }}</div>
+          <div class="stat-label">Upcoming Deadlines</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- My Projects -->
+    <div class="col-lg-8">
+      <div class="hub-card p-0 fade-up">
+        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+          <h6 class="fw-bold mb-0"><i class="bi bi-folder2-open me-2 text-primary"></i>My Projects</h6>
+          <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-navy btn-sm">View All</a>
+        </div>
+        {% if projects %}
+        <div class="table-responsive">
+          <table class="hub-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Participants</th>
+                <th>Progress</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in projects %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('projects.detail', project_id=p.id) }}" class="fw-semibold text-decoration-none" style="color:var(--dut-navy)">
+                    {{ p.title }}
+                  </a>
+                  {% if p.due_date %}
+                  <div class="small text-muted mt-1">
+                    <i class="bi bi-calendar2 me-1"></i>Due {{ p.due_date.strftime('%d %b %Y') }}
+                  </div>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge-status badge-{{ p.status.value }}">{{ p.status.value.replace('_',' ') }}</span>
+                </td>
+                <td>
+                  <span class="fw-semibold">{{ p.participant_count() }}</span>
+                  <span class="text-muted small">/ {{ p.max_participants }}</span>
+                </td>
+                <td style="min-width:120px">
+                  <div class="progress" style="height:6px">
+                    <div class="progress-bar progress-bar-navy" aria-valuenow="{{ p.completion_percentage() }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                  <small class="text-muted">{{ p.completion_percentage() }}%</small>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <a href="{{ url_for('projects.detail', project_id=p.id) }}" class="btn btn-sm btn-outline-navy" data-bs-toggle="tooltip" title="View">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{{ url_for('projects.applications', project_id=p.id) }}" class="btn btn-sm btn-outline-navy position-relative" data-bs-toggle="tooltip" title="Applications">
+                      <i class="bi bi-person-check"></i>
+                    </a>
+                    {% if p.status.value != 'completed' %}
+                    <form method="post" action="{{ url_for('projects.complete_project', project_id=p.id) }}" class="d-inline">
+                      <button type="submit" class="btn btn-sm"
+                              style="background:#d1fae5;color:#065f46;font-weight:600"
+                              data-bs-toggle="tooltip" title="Complete & Issue Certificates"
+                              data-confirm="Mark '{{ p.title }}' as completed and issue certificates to all participants?">
+                        <i class="bi bi-patch-check-fill"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="bi bi-folder-plus"></i></div>
+          <p class="fw-semibold">No projects yet</p>
+          <a href="{{ url_for('projects.create') }}" class="btn btn-navy btn-sm">Post Your First Project</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Upcoming Milestones -->
+    <div class="col-lg-4">
+      <div class="hub-card p-0 fade-up fade-up-2">
+        <div class="px-4 py-3 border-bottom">
+          <h6 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-warning"></i>Upcoming Deadlines</h6>
+        </div>
+        <div class="p-3">
+          {% if upcoming_milestones %}
+            {% for m in upcoming_milestones %}
+            <div class="d-flex gap-3 mb-3 p-2 rounded" style="background:var(--bg)">
+              <div class="flex-shrink-0 text-center" style="min-width:44px;">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--dut-navy)">{{ m.deadline.strftime('%d') }}</div>
+                <div style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase">{{ m.deadline.strftime('%b') }}</div>
+              </div>
+              <div>
+                <div class="fw-semibold small">{{ m.title }}</div>
+                <div class="text-muted" style="font-size:.75rem">{{ m.project.title }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="empty-state py-3">
+            <i class="bi bi-calendar-check text-success" style="font-size:2rem;opacity:.5"></i>
+            <p class="mt-2 small text-muted">No deadlines this week</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if pending_apps > 0 %}
+      <div class="hub-card p-3 mt-3 fade-up fade-up-3" style="border-left:4px solid var(--dut-gold)">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon gold" style="width:42px;height:42px;font-size:1.1rem">
+            <i class="bi bi-person-lines-fill"></i>
+          </div>
+          <div>
+            <div class="fw-bold">{{ pending_apps }} Pending Application{{ 's' if pending_apps > 1 }}</div>
+            <div class="small text-muted">Review and approve students</div>
+          </div>
+        </div>
+        <a href="{{ url_for('projects.list_projects') }}" class="btn btn-gold btn-sm w-100 mt-3 fw-semibold">
+          Review Applications
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,3 @@
+# Keep the folder structure but ignore actual uploaded files
+submissions/*
+!submissions/.gitkeep

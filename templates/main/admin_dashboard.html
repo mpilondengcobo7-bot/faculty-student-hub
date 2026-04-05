@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard – DUT Project Hub{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="page-header-title"><i class="bi bi-shield-check me-2"></i>Admin Dashboard</div>
+    <div class="page-header-sub">System monitoring and user management</div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <div class="row g-3 mb-4">
+    {% for value, label, icon, cls in [
+      (total_users, 'Total Users', 'people-fill', 'navy'),
+      (total_students, 'Students', 'mortarboard', 'blue'),
+      (total_faculty, 'Faculty', 'person-workspace', 'gold'),
+      (total_projects, 'Projects', 'folder2-open', 'green'),
+      (pending_apps, 'Pending Applications', 'hourglass-split', 'red')
+    ] %}
+    <div class="col-6 col-md fade-up" style="animation-delay:{{ loop.index0 * 0.06 }}s">
+      <div class="stat-card">
+        <div class="stat-icon {{ cls }}"><i class="bi bi-{{ icon }}"></i></div>
+        <div>
+          <div class="stat-value">{{ value }}</div>
+          <div class="stat-label">{{ label }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="hub-card p-0 fade-up">
+        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+          <h6 class="fw-bold mb-0">Recent Projects</h6>
+          <a href="{{ url_for('admin.projects') }}" class="btn btn-outline-navy btn-sm">Manage All</a>
+        </div>
+        <div class="table-responsive">
+          <table class="hub-table">
+            <thead>
+              <tr><th>Title</th><th>Faculty</th><th>Status</th><th>Created</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for p in recent_projects %}
+              <tr>
+                <td><a href="{{ url_for('projects.detail', project_id=p.id) }}" class="fw-semibold text-decoration-none" style="color:var(--dut-navy)">{{ p.title }}</a></td>
+                <td class="text-muted small">{{ p.faculty.name }}</td>
+                <td><span class="badge-status badge-{{ p.status.value }}">{{ p.status.value.replace('_',' ') }}</span></td>
+                <td class="text-muted small">{{ p.created_at.strftime('%d %b %Y') }}</td>
+                <td>
+                  <form method="post" action="{{ url_for('admin.delete_project', project_id=p.id) }}" class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger" data-confirm="Delete this project?"><i class="bi bi-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="hub-card p-3 fade-up fade-up-2">
+        <h6 class="fw-bold mb-3">Quick Actions</h6>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('admin.users') }}" class="btn btn-navy"><i class="bi bi-people me-2"></i>Manage Users</a>
+          <a href="{{ url_for('admin.projects') }}" class="btn btn-outline-navy"><i class="bi bi-folder me-2"></i>Manage Projects</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

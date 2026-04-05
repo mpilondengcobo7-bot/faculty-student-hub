@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Add Milestone – {{ project.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container-xxl">
+    <div class="page-header-title"><i class="bi bi-flag-fill me-2"></i>Add Milestone</div>
+    <div class="page-header-sub">{{ project.title }}</div>
+  </div>
+</div>
+
+<div class="container-xxl">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      <!-- ── Date Rules Info Card ── -->
+      <div class="hub-card p-3 mb-3 fade-up" style="border-left:4px solid var(--dut-navy)">
+        <div class="fw-semibold small mb-2" style="color:var(--dut-navy)">
+          <i class="bi bi-shield-check me-1"></i>Milestone Date Rules
+        </div>
+        <div class="d-flex flex-column gap-2" style="font-size:.8rem">
+
+          {# Rule 2 — application deadline #}
+          {% if project.application_deadline %}
+            {% if project.has_commenced() %}
+            <div class="d-flex gap-2 align-items-start text-success">
+              <i class="bi bi-check-circle-fill mt-1 flex-shrink-0"></i>
+              <span>
+                Application deadline <strong>{{ project.application_deadline.strftime('%d %B %Y') }}</strong>
+                has passed — project has commenced.
+              </span>
+            </div>
+            {% else %}
+            <div class="d-flex gap-2 align-items-start text-danger">
+              <i class="bi bi-x-circle-fill mt-1 flex-shrink-0"></i>
+              <span>
+                Application deadline <strong>{{ project.application_deadline.strftime('%d %B %Y') }}</strong>
+                has <strong>not yet passed</strong>. Milestones cannot be created until the project commences.
+              </span>
+            </div>
+            {% endif %}
+          {% endif %}
+
+          {# Rule 1 — milestone must be before due_date - 1 #}
+          {% if project.due_date %}
+          {% set limit = project.milestone_deadline_limit() %}
+          <div class="d-flex gap-2 align-items-start text-primary">
+            <i class="bi bi-calendar-check mt-1 flex-shrink-0"></i>
+            <span>
+              Due date must be on or before
+              <strong>{{ limit.strftime('%d %B %Y') }}</strong>
+              (one day before the project due date of {{ project.due_date.strftime('%d %B %Y') }}).
+            </span>
+          </div>
+          {% endif %}
+
+          {# Rule 3 — completion lock notice #}
+          <div class="d-flex gap-2 align-items-start text-muted">
+            <i class="bi bi-lock mt-1 flex-shrink-0"></i>
+            <span>Once marked complete, no additional tasks can be added to a milestone.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-card p-4 fade-up fade-up-1">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Milestone Title <span class="text-danger">*</span></label>
+            <input type="text" name="title"
+                   value="{{ form_data.get('title', '') if form_data else '' }}"
+                   class="form-control"
+                   placeholder="e.g. Phase 1: Requirements Gathering" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"
+                      placeholder="What should be achieved in this milestone?"
+                      maxlength="500">{{ form_data.get('description', '') if form_data else '' }}</textarea>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">
+              Due Date
+              {% if project.due_date %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <input type="date" name="deadline" class="form-control"
+                   value="{{ form_data.get('deadline', '') if form_data else '' }}"
+                   min="{{ min_deadline }}"
+                   {% if max_deadline %}max="{{ max_deadline }}"{% endif %}
+                   {{ 'required' if project.due_date else '' }}>
+
+            {% if project.due_date %}
+            <div class="form-text">
+              <i class="bi bi-calendar-range me-1"></i>
+              Must be between
+              {% if project.commencement_date %}
+                <strong>{{ project.commencement_date.strftime('%d %b %Y') }}</strong> and
+              {% endif %}
+              <strong>{{ project.milestone_deadline_limit().strftime('%d %b %Y') }}</strong>.
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-navy px-4 fw-semibold"
+                    {% if project.application_deadline and not project.has_commenced() %}
+                    disabled title="Project has not yet commenced"
+                    {% endif %}>
+              <i class="bi bi-check-lg me-2"></i>Create Milestone
+            </button>
+            <a href="{{ url_for('projects.detail', project_id=project.id) }}"
+               class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
